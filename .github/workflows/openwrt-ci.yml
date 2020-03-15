@@ -37,9 +37,9 @@ jobs:
         run: |
           docker rmi `docker images -q`
           sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d
-          sudo -E apt-get -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* mysql* php*
+#          sudo -E apt-get -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* mysql* php*
           sudo -E apt-get update
-          sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler
+          sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3.5 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib linux-libc-dev:i386
           sudo -E apt-get -y autoremove --purge
           sudo -E apt-get clean
 
@@ -59,11 +59,13 @@ jobs:
           cd lede
           echo 'src-git lienol https://github.com/Lienol/openwrt-package' >>  feeds.conf.default
       - name: Update feeds
+        working-directory: ./lede
         run: |
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
       - name: Generate configuration file
+        working-directory: ./lede
         run: |
           rm -f ./.config*
           touch ./.config
@@ -199,12 +201,14 @@ jobs:
           make defconfig
 
       - name: Make download
+        working-directory: ./lede
         run: |
           make download -j8
           find ./dl/ -size -1024c -exec rm -f {} \;
           df -h
 
       - name: Compile firmware
+        working-directory: ./lede
         run: |
           make -j$(nproc) || make -j1 V=s
           echo "======================="
@@ -217,9 +221,11 @@ jobs:
           du -h --max-depth=1 ./bin
 
       - name: Prepare artifact
+        working-directory: ./lede
         run: find ./bin/targets/ -type d -name "packages" | xargs rm -rf {}
 
       - name: Upload artifact
+        working-directory: ./lede
         uses: actions/upload-artifact@master
         with:
           name: OpenWrt firmware
