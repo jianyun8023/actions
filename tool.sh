@@ -59,7 +59,7 @@ function compile_firmware() {
 function prepare_artifact() {
   cd $source_path || exit 1
   find ./bin/targets/ -type d -name "packages" -exec ls -l {} \;
-  find ./bin/targets/ -type d -name "packages" -exec rm -rf {} \;
+  find ./bin/targets/ -type d -name "packages" | xargs rm -rf {}
 }
 
 function parse_env() {
