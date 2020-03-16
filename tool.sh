@@ -28,7 +28,7 @@ function update_feeds() {
 }
 
 function build_config() {
-  cp -f ".config" "$source_path"
+  cp -f "config.seed" "$source_path/.config"
   cd $source_path || exit 1
   cp -f "../diy.sh" ./
   chmod +x ./diy.sh
