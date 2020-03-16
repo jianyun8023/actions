@@ -10,6 +10,8 @@ function install_dep() {
 }
 
 function clone_app() {
+  cd "package" 
+  echo "当前目录 "$(pwd)
   git clone https://github.com/rufengsuixing/luci-app-adguardhome
   git clone https://github.com/kuoruan/luci-app-v2ray
 }
@@ -18,7 +20,7 @@ function clone_source_code() {
   git clone https://github.com/coolsnowwolf/lede $source_path
   cd $source_path || exit 1
   echo 'src-git lienol https://github.com/Lienol/openwrt-package' >>feeds.conf.default
-  cd "package" && clone_app
+  clone_app
 }
 
 function update_feeds() {
