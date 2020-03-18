@@ -79,7 +79,7 @@ function parse_env() {
     compile_firmware $2
     ;;
   *)
-    echo "Usage: tool [install_dep|clone|update_feeds|build_config|make_download|compile_firmware|prepare_artifact]" >&2
+    echo "Usage: tool [install_dep|clone|update_feeds|build_config|make_download|compile_firmware]" >&2
     exit 1
     ;;
   esac
