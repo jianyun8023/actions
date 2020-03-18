@@ -9,18 +9,10 @@ function install_dep() {
   sudo -E apt-get clean
 }
 
-function clone_app() {
-  cd "package" 
-  echo "当前目录 "$(pwd)
-  git clone https://github.com/rufengsuixing/luci-app-adguardhome
-  git clone https://github.com/kuoruan/luci-app-v2ray
-}
-
 function clone_source_code() {
   git clone https://github.com/coolsnowwolf/lede $source_path
   cd $source_path || exit 1
   echo 'src-git lienol https://github.com/Lienol/openwrt-package' >>feeds.conf.default
-  clone_app
 }
 
 function update_feeds() {
@@ -30,16 +22,19 @@ function update_feeds() {
 }
 
 function build_config() {
-  cp -f "config.seed" "$source_path/.config"
   cd $source_path || exit 1
-  cp -f "../diy.sh" ./
-  chmod +x ./diy.sh
-  ./diy.sh
-  make defconfig
+  cp -f "../x86_64.config" ".config"
+  chmod +x ../diy.sh
+  ../diy.sh "$(pwd)"
+  du -h --max-depth=2 ./
+  echo "当前配置=====start"
+  cat '.config'
+  echo "当前配置=====end"
 }
 
 function make_download() {
   cd $source_path || exit 1
+  make defconfig
   make download -j8
   find ./dl/ -size -1024c -exec rm -f {} \;
   df -h
@@ -63,12 +58,6 @@ function compile_firmware() {
   du -h --max-depth=1 ./bin
 }
 
-function prepare_artifact() {
-  cd $source_path || exit 1
-  find ./bin/targets/ -type d -name "packages" -exec ls -l {} \;
-  find ./bin/targets/ -type d -name "packages" | xargs rm -rf {}
-}
-
 function parse_env() {
   case "$1" in
   install_dep)
@@ -88,9 +77,6 @@ function parse_env() {
     ;;
   compile_firmware)
     compile_firmware $2
-    ;;
-  prepare_artifact)
-    prepare_artifact $2
     ;;
   *)
     echo "Usage: tool [install_dep|clone|update_feeds|build_config|make_download|compile_firmware|prepare_artifact]" >&2
