@@ -28,5 +28,7 @@ echo '下载ServerChan'
 git clone https://github.com/tty228/luci-app-serverchan "$source_dir/package/luci-app-serverchan"
 echo 'CONFIG_PACKAGE_luci-app-serverchan=y' >>"$source_dir/.config"
 
-ls "$source_dir/feeds/luci/modules/luci-base/root/etc/config/"
+ls "$source_dir/feeds/luci/modules/luci-base/root/etc/hotplug.d/iface/"
+echo '列出 feeds目录'
+tree "$source_dir/feeds"
 exit 1
