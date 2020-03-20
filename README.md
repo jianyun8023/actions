@@ -16,7 +16,6 @@
 更换默认主题为Argon
 
 ## 精简列表
-- 广告过滤大师 `luci-app-adbyby-plus`
 - 网易云音乐解锁`luci-app-unblockmusic`
 - Zerotier虚拟网络`luci-app-zerotier`
 - 迅雷快鸟`luci-app-xlnetacc`
@@ -27,7 +26,7 @@
 ## 新增APP
 - luci版v2ray [luci-app-v2ray](https://github.com/kuoruan/luci-app-v2ray)
 - 微信消息推送server酱 [luci-app-serverchan](https://github.com/tty228/luci-app-serverchan)
-- AdGuardHome广告过滤 [luci-app-adguardhome](https://github.com/rufengsuixing/luci-app-adguardhome)
+- ~~AdGuardHome广告过滤 [luci-app-adguardhome](https://github.com/rufengsuixing/luci-app-adguardhome)~~
 - Passwall
 
 

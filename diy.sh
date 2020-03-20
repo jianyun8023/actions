@@ -16,9 +16,9 @@ sed -i "s/'UTC'/'CST-8'\n        set system.@system[-1].zonename='Asia\/Shanghai
 echo '修改默认主题'
 sed -i 's/config internal themes/config internal themes\n    option Argon  \"\/luci-static\/argon\"/g' "$source_dir/feeds/luci/modules/luci-base/root/etc/config/luci"
 
-echo '下载AdGuardHome'
-git clone https://github.com/rufengsuixing/luci-app-adguardhome "$source_dir/package/luci-app-adguardhome"
-echo 'CONFIG_PACKAGE_luci-app-adguardhome=y' >>"$source_dir/.config"
+#echo '下载AdGuardHome'
+#git clone https://github.com/rufengsuixing/luci-app-adguardhome "$source_dir/package/luci-app-adguardhome"
+#echo 'CONFIG_PACKAGE_luci-app-adguardhome=y' >>"$source_dir/.config"
 
 echo '下载v2ray'
 git clone https://github.com/kuoruan/luci-app-v2ray "$source_dir/package/luci-app-v2ray"
@@ -27,3 +27,6 @@ echo 'CONFIG_PACKAGE_luci-app-v2ray=m' >>"$source_dir/.config"
 echo '下载ServerChan'
 git clone https://github.com/tty228/luci-app-serverchan "$source_dir/package/luci-app-serverchan"
 echo 'CONFIG_PACKAGE_luci-app-serverchan=y' >>"$source_dir/.config"
+
+ls "$source_dir/feeds/luci/modules/luci-base/root/etc/config/"
+exit 1
