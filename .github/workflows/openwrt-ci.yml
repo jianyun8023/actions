@@ -17,7 +17,12 @@ on:
   #   - cron: 0 20 * * *
   # release:
   #   types: [published]
-
+env:
+  REPO_URL: https://github.com/coolsnowwolf/lede
+  REPO_BRANCH: master
+  CONFIG_FILE: .config
+  SSH_ACTIONS: true
+  TZ: Asia/Shanghai
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -42,6 +47,9 @@ jobs:
         run: ./tool.sh update_feeds
       - name: Generate configuration file
         run: ./tool.sh build_config
+      - name: SSH connection to Actions
+        uses: P3TERX/debugger-action@master
+        if: env.SSH_ACTIONS == 'true'
       - name: Make download
         run: ./tool.sh make_download
       - name: Compile firmware
