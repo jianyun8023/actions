@@ -14,6 +14,19 @@
 
 修改默认lan的IP为192.168.2.1
 更换默认主题为Argon
+默认账户密码 `root\password`
+
+增加网络自动挂载功能，例如挂载nfs
+```
+config 'netmount' 
+    option enabled '1'
+    option target '/mount/point' # 挂载到的目录
+    option src 'server.name.or.ip:/exported/dir' #远程服务器和使用的目录
+    option options 'ro,nolock'
+    option network 'lan'    # 挂载使用的网络端口，可以从/etc/config/network找到
+    option fstype 'nfs4'     # 或者 cifs
+    option delay 5
+```
 
 ## 精简列表
 - 网易云音乐解锁`luci-app-unblockmusic`
@@ -28,7 +41,7 @@
 - 微信消息推送server酱 [luci-app-serverchan](https://github.com/tty228/luci-app-serverchan)
 - ~~AdGuardHome广告过滤 [luci-app-adguardhome](https://github.com/rufengsuixing/luci-app-adguardhome)~~
 - Passwall
-
+- AirPlay2服务端
 
 ## 构建脚本参考
 - [P3TERX](https://github.com/P3TERX/Actions-OpenWrt)

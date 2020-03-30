@@ -13,15 +13,16 @@ on:
   push:
     branches:
       - master
-  # schedule:
-  #   - cron: 0 20 * * *
+  schedule:
+    #每天凌晨1点触发
+    - cron: 0 0 1 * *
   # release:
   #   types: [published]
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: master
   CONFIG_FILE: .config
-  SSH_ACTIONS: true
+  SSH_ACTIONS: false
   TZ: Asia/Shanghai
 jobs:
   build:
