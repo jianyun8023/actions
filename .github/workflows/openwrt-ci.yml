@@ -15,7 +15,7 @@ on:
       - master
   schedule:
     #每天凌晨1点触发
-    - cron: 0 0 1 * *
+    - cron: '0 1 * * *'
   # release:
   #   types: [published]
 env:
