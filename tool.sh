@@ -43,7 +43,7 @@ function make_download() {
 
 function compile_firmware() {
   cd $source_path || exit 1
-  IGNORE_ERRORS=1 make -j$(nproc) || make -j1 V=s
+  make -j$(nproc) || make -j1 V=s
   if [ $? -eq 0 ]; then
     echo "编译完成"
   else

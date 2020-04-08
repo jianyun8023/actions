@@ -14,8 +14,8 @@ on:
     branches:
       - master
   schedule:
-    #每天凌晨1点触发
-    - cron: '0 1 * * *'
+    # UTC时间 东八区每天凌晨2点触发
+    - cron: '0 18 * * *'
   # release:
   #   types: [published]
 env:
