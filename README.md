@@ -17,6 +17,7 @@
 默认账户密码 `root\password`
 
 增加网络自动挂载功能，例如挂载nfs
+/etc/config/fstab
 ```
 config 'netmount' 
     option enabled '1'
@@ -28,6 +29,8 @@ config 'netmount'
     option delay 5
 ```
 
+默认安装python3
+
 ## 精简列表
 - 网易云音乐解锁`luci-app-unblockmusic`
 - Zerotier虚拟网络`luci-app-zerotier`
@@ -37,11 +40,11 @@ config 'netmount'
 
 
 ## 新增APP
-- luci版v2ray [luci-app-v2ray](https://github.com/kuoruan/luci-app-v2ray)
+~~- luci版v2ray [luci-app-v2ray](https://github.com/kuoruan/luci-app-v2ray)~~
 - 微信消息推送server酱 [luci-app-serverchan](https://github.com/tty228/luci-app-serverchan)
 - ~~AdGuardHome广告过滤 [luci-app-adguardhome](https://github.com/rufengsuixing/luci-app-adguardhome)~~
-- Passwall
-- AirPlay2服务端
+- ~~Passwall~~
+- ~~AirPlay2服务端~~
 
 ## 构建脚本参考
 - [P3TERX](https://github.com/P3TERX/Actions-OpenWrt)
