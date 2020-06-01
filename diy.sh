@@ -80,10 +80,10 @@ echo '下载ServerChan'
 git clone https://github.com/tty228/luci-app-serverchan "$source_dir/package/luci-app-serverchan"
 echo 'CONFIG_PACKAGE_luci-app-serverchan=y' >>"$source_dir/.config"
 
-echo '下载dockerman'
-rm -rf "$source_dir/package/lean/luci-lib-docker"
-rm -rf "$source_dir/package/lean/luci-app-dockerman"
-git clone https://github.com/lisaac/luci-lib-docker.git "$source_dir/package/luci-lib-docker"
-git clone https://github.com/lisaac/luci-app-dockerman.git "$source_dir/package/luci-app-dockerman"
-echo 'CONFIG_PACKAGE_luci-lib-docker=y' >>"$source_dir/.config"
-echo 'CONFIG_PACKAGE_luci-app-dockerman=y' >>"$source_dir/.config"
+#echo '下载dockerman'
+#rm -rf "$source_dir/package/lean/luci-lib-docker"
+#rm -rf "$source_dir/package/lean/luci-app-dockerman"
+#git clone https://github.com/lisaac/luci-lib-docker.git "$source_dir/package/luci-lib-docker"
+#git clone https://github.com/lisaac/luci-app-dockerman.git "$source_dir/package/luci-app-dockerman"
+#echo 'CONFIG_PACKAGE_luci-lib-docker=y' >>"$source_dir/.config"
+#echo 'CONFIG_PACKAGE_luci-app-dockerman=y' >>"$source_dir/.config"
