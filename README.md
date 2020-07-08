@@ -16,18 +16,6 @@
 更换默认主题为Argon
 默认账户密码 `root\password`
 
-增加网络自动挂载功能，例如挂载nfs
-/etc/config/fstab
-```
-config 'netmount' 
-    option enabled '1'
-    option target '/mount/point' # 挂载到的目录
-    option src 'server.name.or.ip:/exported/dir' #远程服务器和使用的目录
-    option options 'ro,nolock'
-    option network 'lan'    # 挂载使用的网络端口，可以从/etc/config/network找到
-    option fstype 'nfs4'     # 或者 cifs
-    option delay 5
-```
 
 默认安装python3
 
