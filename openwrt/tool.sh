@@ -25,9 +25,9 @@ function update_feeds() {
 
 function build_config() {
   cd $source_path || exit 1
-  cp -f "../x86_64.config" ".config"
-  chmod +x ../diy.sh
-  ../diy.sh "$(pwd)"
+  cp -f "../openwrt/x86_64.config" ".config"
+  chmod +x ../openwrt/diy.sh
+  ../openwrt/diy.sh "$(pwd)"
   du -h --max-depth=2 ./
   echo "当前配置=====start"
   cat '.config'

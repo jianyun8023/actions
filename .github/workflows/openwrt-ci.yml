@@ -38,23 +38,23 @@ jobs:
         run: |
           docker rmi `docker images -q`
           sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d
-          chmod +x ./tool.sh
-          ./tool.sh install_dep
+          chmod +x ./openwrt/tool.sh
+          ./openwrt/tool.sh install_dep
           df -h
 
       - name: clone lede
-        run: ./tool.sh clone
+        run: ./openwrt/tool.sh clone
       - name: Update feeds
-        run: ./tool.sh update_feeds
+        run: ./openwrt/tool.sh update_feeds
       - name: Generate configuration file
-        run: ./tool.sh build_config
+        run: ./openwrt/tool.sh build_config
       - name: SSH connection to Actions
         uses: P3TERX/debugger-action@master
         if: env.SSH_ACTIONS == 'true'
       - name: Make download
-        run: ./tool.sh make_download
+        run: ./openwrt/tool.sh make_download
       - name: Compile firmware
-        run: ./tool.sh compile_firmware
+        run: ./openwrt/tool.sh compile_firmware
       - name: Upload OpenWrt Packages
         uses: actions/upload-artifact@master
         with:
