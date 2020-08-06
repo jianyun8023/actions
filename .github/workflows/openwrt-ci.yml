@@ -10,9 +10,9 @@
 name: OpenWrt-CI
 
 on:
-  push:
-    branches:
-      - master
+#  push:
+#    branches:
+#      - master
   schedule:
     # UTC时间 东八区每天凌晨2点触发
     - cron: '0 18 * * *'
