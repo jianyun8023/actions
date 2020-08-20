@@ -19,7 +19,7 @@ env:
   ORIGIN_REPO_BRANCH: master
   TARGET_REPO: jianyun8023/pulsar
   TARGET_REPO_BRANCH: master
-  TARGET_REPO_BRANCH_FORCE: false
+  TARGET_REPO_BRANCH_FORCE: true
   TZ: Asia/Shanghai
 jobs:
   build:
