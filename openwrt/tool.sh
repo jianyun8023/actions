@@ -15,6 +15,8 @@ function clone_source_code() {
   cd $source_path || exit 1
 #  echo 'src-git lienol https://github.com/Lienol/openwrt-package' >>feeds.conf.default
   sed -i 's/#src-git helloworld/src-git helloworld/g' feeds.conf.default
+  # Lienol/openwrt-package
+  sed -i '$a src-git lienol https://github.com/Lancenas/lienol-openwrt-package.git' feeds.conf.default
 }
 
 function update_feeds() {
