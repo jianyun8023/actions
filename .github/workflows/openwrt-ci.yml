@@ -53,7 +53,8 @@ jobs:
       - name: Upload OpenWrt firmware
         uses: actions/upload-artifact@master
         with:
-          name: OpenWrt firmware
-          path: ./lede/bin/targets/x86/64
+          name: openwrt-x86-64-generic-squashfs-combined.img.gz
+          path: |
+            ./lede/bin/targets/x86/64/openwrt-x86-64-generic-squashfs-combined.img.gz
       - name: WeChat notification
         run: curl https://sc.ftqq.com/${{ secrets.SCKEY }}.send?text=OpenWrt_X64编译完成

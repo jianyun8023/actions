@@ -24,3 +24,7 @@ sed -i 's/option mediaurlbase \/luci-static\/bootstrap/option mediaurlbase \"\/l
 echo '下载ServerChan'
 git clone https://github.com/tty228/luci-app-serverchan "$source_dir/package/luci-app-serverchan"
 echo 'CONFIG_PACKAGE_luci-app-serverchan=y' >>"$source_dir/.config"
+
+echo '下载clash'
+git clone https://github.com/frainzy1477/luci-app-clash.git "$source_dir/package/luci-app-clash"
+echo 'CONFIG_PACKAGE_luci-app-clash=y' >>"$source_dir/.config"
