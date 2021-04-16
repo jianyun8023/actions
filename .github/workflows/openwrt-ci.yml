@@ -57,4 +57,4 @@ jobs:
           path: |
             ./lede/bin/targets/x86/64/openwrt-x86-64-generic-squashfs-combined.img.gz
       - name: WeChat notification
-        run: curl https://sc.ftqq.com/${{ secrets.SCKEY }}.send?text=OpenWrt_X64编译完成
+        run: curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=OpenWrt_X64编译完成
