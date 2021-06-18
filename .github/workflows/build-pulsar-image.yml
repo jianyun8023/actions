@@ -7,7 +7,7 @@
 name: Build Pulsar Images
 on: workflow_dispatch
 env:
-  PULSAR_VERSION: 2.7.0
+  PULSAR_VERSION: ${{ secrets.PULSAR_VERSION }}
 
 jobs:
   docker:
