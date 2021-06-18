@@ -32,6 +32,6 @@ jobs:
           build-args: |
             PULSAR_VERSION=${{ env.PULSAR_VERSION }}
           push: true
-          tags:
-            - ${{ secrets.DOCKERHUB_USERNAME }}/pulsar:latest
-            - ${{ secrets.DOCKERHUB_USERNAME }}/pulsar:${{ env.PULSAR_VERSION }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/pulsar:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/pulsar:${{ env.PULSAR_VERSION }}
