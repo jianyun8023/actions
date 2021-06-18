@@ -29,8 +29,8 @@ jobs:
         with:
           context: docker/pulsar
           platforms: linux/amd64,linux/arm64
-          build-args:
-            - PULSAR_VERSION=${{ env.PULSAR_VERSION }}
+          build-args: |
+            PULSAR_VERSION=${{ env.PULSAR_VERSION }}
           push: true
           tags:
             - ${{ secrets.DOCKERHUB_USERNAME }}/pulsar:latest
