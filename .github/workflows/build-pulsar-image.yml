@@ -33,5 +33,5 @@ jobs:
             PULSAR_VERSION=${{ env.PULSAR_VERSION }}
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/pulsar:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/pulsar:${{ env.PULSAR_VERSION }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/pulsar:latest
