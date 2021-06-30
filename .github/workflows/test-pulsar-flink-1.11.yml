@@ -27,13 +27,12 @@ jobs:
           java-version: 1.8
       - name: Run the Maven verify phase
         run: mvn install
-      - name: WeChat notification success
-        id: ${{ success() }}
-        run: |
-          VERSION=`./get-version.sh`
-          curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[success]验证pulsar-flink-$VERSION通过
       - name: WeChat notification failure
         if: ${{ failure() }}
         run: |
           VERSION=`./get-version.sh`
           curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[fail]验证pulsar-flink-$VERSION失败
+      - name: WeChat notification success
+        run: |
+          VERSION=`./get-version.sh`
+          curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[success]验证pulsar-flink-$VERSION通过
