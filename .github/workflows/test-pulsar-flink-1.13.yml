@@ -1,0 +1,39 @@
+#
+# This is free software, lisence use MIT.
+# 
+# Copyright (C) 2019 jianyun8023 <https://zhaojianyun.com>
+#
+
+name: test-pulsar-flink-1.13
+
+on: workflow_dispatch
+env:
+  ORIGIN_REPO: streamnative/pulsar-flink
+  ORIGIN_REPO_BRANCH: release-1.13
+  TZ: Asia/Shanghai
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout target repository
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ env.ORIGIN_REPO }}
+          ref: ${{ env.ORIGIN_REPO_BRANCH }}
+          persist-credentials: false
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Run the Maven verify phase
+        run: mvn install
+      - name: WeChat notification success
+        id: ${{ success() }}
+        run: |
+          VERSION=`./get-version.sh`
+          curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[success]验证pulsar-flink-$VERSION通过
+      - name: WeChat notification failure
+        if: ${{ failure() }}
+        run: |
+          VERSION=`./get-version.sh`
+          curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[fail]验证pulsar-flink-$VERSION失败
