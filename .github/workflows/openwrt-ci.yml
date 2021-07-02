@@ -1,14 +1,6 @@
 name: OpenWrt-CI
 
-on:
-  push:
-    branches:
-      - master
-  schedule:
-    # UTC时间 东八区每天凌晨2点触发
-    - cron: '0 18 * * *'
-  # release:
-  #   types: [published]
+on: workflow_dispatch
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: master
