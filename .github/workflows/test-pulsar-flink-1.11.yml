@@ -8,7 +8,7 @@ name: test-pulsar-flink-1.11
 
 on: workflow_dispatch
 env:
-  ORIGIN_REPO: streamnative/pulsar-flink
+  ORIGIN_REPO: jianyun8023/pulsar-flink
   ORIGIN_REPO_BRANCH: release-1.11
   TZ: Asia/Shanghai
 jobs:
