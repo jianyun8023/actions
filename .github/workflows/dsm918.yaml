@@ -48,7 +48,7 @@ jobs:
       - name: Notification failure
         if: ${{ failure() }}
         run: |
-          curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[fail] DSM7引导编译失败
+          curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[fail]%20DSM7引导编译失败
       - name: Notification success
         run: |
-          curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[success] DSM7引导编译成功
+          curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[success]%20DSM7引导编译成功
