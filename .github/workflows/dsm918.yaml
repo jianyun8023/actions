@@ -4,7 +4,7 @@ name: Dsm7 bootloader Compile
 
 on: workflow_dispatch
 env:
-  REPO_URL: https://github.com/tossp/redpill-tool-chain.git
+  REPO_URL: tossp/redpill-tool-chain
   REPO_BRANCH: master
   WORK_DIR: redpill-tool-chain
   TZ: Asia/Shanghai
