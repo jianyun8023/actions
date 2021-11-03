@@ -1,0 +1,55 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Dsm7 bootloader Compile
+
+on: workflow_dispatch
+env:
+  REPO_URL: https://github.com/tossp/redpill-tool-chain.git
+  REPO_BRANCH: master
+  WORK_DIR: redpill-tool-chain
+  TZ: Asia/Shanghai
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      
+      - name: checkout target repository
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ env.REPO_URL }}
+          ref: ${{ env.REPO_BRANCH }}
+          persist-credentials: false
+          path: ${{ env.WORK_DIR }}
+      - name: Copy User Config
+        run: cp -rf ./dsm/*.json ./${{ env.WORK_DIR }}
+      - name: Chmod
+        run: chmod 0755 ./redpill_tool_chain.sh
+        working-directory: ${{ env.WORK_DIR }}
+
+      - name: Build docker image
+        run: ./redpill_tool_chain.sh build apollolake-7.0.1-42218
+        working-directory: ${{ env.WORK_DIR }}
+
+      - name: Create dsm image
+        run: ./redpill_tool_chain.sh auto apollolake-7.0.1-42218
+        working-directory: ${{ env.WORK_DIR }}
+      - name: Notification failure
+        if: ${{ failure() }}
+        run: |
+          curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[fail] DSM7引导编译失败
+      - name: Notification success
+        run: |
+          curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[success] DSM7引导编译失败成功
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dsm918
+          path: ./images
+        working-directory: ${{ env.WORK_DIR }}
