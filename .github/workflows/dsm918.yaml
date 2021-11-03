@@ -41,14 +41,14 @@ jobs:
       - name: Create dsm image
         run: ./redpill_tool_chain.sh auto apollolake-7.0.1-42218
         working-directory: ${{ env.WORK_DIR }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dsm918
+          path: ./${{ env.WORK_DIR }}/images
       - name: Notification failure
         if: ${{ failure() }}
         run: |
           curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[fail] DSM7引导编译失败
       - name: Notification success
         run: |
-          curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[success] DSM7引导编译失败成功
-      - uses: actions/upload-artifact@v2
-        with:
-          name: dsm918
-          path: ./${{ env.WORK_DIR }}/images
+          curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=[success] DSM7引导编译成功
