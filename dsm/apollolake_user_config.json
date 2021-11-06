@@ -1,20 +1,35 @@
 {
-    "extra_cmdline": {
-      "pid": "0x0951",
-      "vid": "0x1666",
-      "sn": "17A0PDN949204",
-      "mac1": "001132827E67",
-      "mac2": "001132827E68",
-      "netif_num": 2
-    },
-    "synoinfo": {
-      "maxdisks": "24",
-      "maxlanport": "4",
-      "usbportcfg": "0x30000",
-      "esataportcfg": "0x0",
-      "internalportcfg": "0xffff",
-      "supportsystemperature": "no",
-      "supportsystempwarning": "no"
-    },
-    "ramdisk_copy": {}
-  }
+  "extra_cmdline": {
+    "pid": "0x1666",
+    "vid": "0x0951",
+    "sn": "17A0PDN949204",
+    "mac1": "001132827E67",
+    "mac2": "001132827E68",
+    "netif_num": 2
+  },
+  "synoinfo": {
+    "maxdisks": "24",
+    "maxlanport": "4",
+    "usbportcfg": "0x30000",
+    "esataportcfg": "0x0",
+    "internalportcfg": "0xffff",
+    "supportsystemperature": "no",
+    "supportsystempwarning": "no"
+  },
+  "ramdisk_copy": {},
+  "extensions": [
+    "thethorgroup.virtio",
+    "redpill-boot-wait",
+    "jumkey.acpid2",
+    "pocopico.e1000",
+    "pocopico.e1000e",
+    "pocopico.atlantic",
+    "pocopico.igb",
+    "pocopico.ixgbe",
+    "pocopico.ixgbevf",
+    "pocopico.mpt2sas",
+    "pocopico.mpt3sas",
+    "pocopico.r8125",
+    "pocopico.vmxnet3"
+  ]
+}
