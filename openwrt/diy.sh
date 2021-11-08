@@ -8,6 +8,7 @@
 source_dir=$1
 echo "源码所在路径: "$source_dir
 echo '修改网关地址'
+cat "$source_dir/package/base-files/files/bin/config_generate"
 sed -i 's/192.168.1.1/192.168.2.1/g' "$source_dir/package/base-files/files/bin/config_generate"
 
 echo '修改时区'
@@ -21,9 +22,9 @@ sed -i 's/option mediaurlbase \/luci-static\/bootstrap/option mediaurlbase \"\/l
 # git clone https://github.com/rufengsuixing/luci-app-adguardhome "$source_dir/package/luci-app-adguardhome"
 # echo 'CONFIG_PACKAGE_luci-app-adguardhome=y' >>"$source_dir/.config"
 
-echo '下载ServerChan'
-git clone https://github.com/tty228/luci-app-serverchan "$source_dir/package/luci-app-serverchan"
-echo 'CONFIG_PACKAGE_luci-app-serverchan=y' >>"$source_dir/.config"
+# echo '下载ServerChan'
+# git clone https://github.com/tty228/luci-app-serverchan "$source_dir/package/luci-app-serverchan"
+# echo 'CONFIG_PACKAGE_luci-app-serverchan=y' >>"$source_dir/.config"
 
 echo '下载openclash'
 git clone https://github.com/vernesong/OpenClash.git
