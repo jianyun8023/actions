@@ -6,14 +6,7 @@
 
 name: Sync-Pulsar-Repository
 
-on:
-  push:
-    branches:
-      - master
-  schedule:
-    - cron: '0 * * * *'
-  # release:
-  #   types: [published]
+on: workflow_dispatch
 env:
   ORIGIN_REPO: apache/pulsar
   ORIGIN_REPO_BRANCH: master
