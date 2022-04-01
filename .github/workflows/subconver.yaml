@@ -34,18 +34,18 @@ jobs:
         run: |
           echo "token = ${{ secrets.DEPLOY_TOKEN }}" >> subconverter/gistconf.ini
           cat > subconverter/generate.ini <<EOF
-  [surge-sub]
-  target=surge
-  url=${{ secrets.SUBURL }}
-  filename=surge-sub
-  ver=4
-  udp=true
-  exclude=拥挤|海外|测速|官网
-  emoji=true
-  tfo=true
-  path=surge-sub.list
-  list=true
-  EOF
+          [surge-sub]
+          target=surge
+          url=${{ secrets.SUBURL }}
+          filename=surge-sub
+          ver=4
+          udp=true
+          exclude=拥挤|海外|测速|官网
+          emoji=true
+          tfo=true
+          path=surge-sub.list
+          list=true
+          EOF
           ./subconverter/subconverter -g
 
       - name: Deploy
