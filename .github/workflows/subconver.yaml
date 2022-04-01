@@ -1,12 +1,12 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Dsm7 bootloader Compile
+name: Convert sub
 
 on: workflow_dispatch
 env:
-  REPO_URL: tossp/redpill-tool-chain
-  REPO_BRANCH: master
-  WORK_DIR: redpill-tool-chain
+#  REPO_URL: tossp/redpill-tool-chain
+#  REPO_BRANCH: master
+#  WORK_DIR: redpill-tool-chain
   TZ: Asia/Shanghai
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
