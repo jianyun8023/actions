@@ -20,7 +20,7 @@ jobs:
         working-directory: "easy-connect"
         run:  |
           docker build -f Dockerfile.fake-hwaddr -t fake-hwaddr  --label "runnumber=${GITHUB_RUN_ID}" .
-          docker build --build-arg EC_URL=$EC_URL -f Dockerfile --label "runnumber=${GITHUB_RUN_ID}"  .
+          docker build --build-arg EC_URL=$EC_URL -f Dockerfile -t $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"  .
 
       - name: Log in to registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
