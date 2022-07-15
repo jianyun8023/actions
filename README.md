@@ -32,6 +32,9 @@
 ## Fork后的仓库同步
 每小时以rebase的方式同步一次[pulsar](https://github.com/apache/pulsar)的master到自己的仓库。
 
+## docker-easy-connect
+参考了 [Hagb/docker-easyconnect](https://github.com/Hagb/docker-easyconnect)配置，自己手动构建镜像
+
 ## License
 
 [MIT](https://github.com/jianyun8023/openwrt_action/blob/master/LICENSE) © jianyun8023
