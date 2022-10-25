@@ -5,7 +5,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends --no-install-suggests \
         libgtk2.0-0 libx11-xcb1 libxtst6 libnss3 libasound2 libdbus-glib-1-2 iptables xclip\
         dante-server tigervnc-standalone-server tigervnc-common dante-server psmisc flwm x11-utils\
-        busybox libssl-dev iproute2 tinyproxy-bin
+        busybox libssl-dev iproute2 tinyproxy-bin fonts-noto-cjk-extra
 
 ARG EC_URL
 
