@@ -29,4 +29,4 @@ sed -i 's/option mediaurlbase \/luci-static\/bootstrap/option mediaurlbase \"\/l
 echo '下载openclash'
 git clone https://github.com/vernesong/OpenClash.git
 cp -rf OpenClash/luci-app-openclash $source_dir/package/luci-app-openclash
-echo 'CONFIG_PACKAGE_luci-app-openclash=y' >>"$source_dir/.config"
+echo 'CONFIG_PACKAGE_luci-app-openclash=m' >>"$source_dir/.config"
