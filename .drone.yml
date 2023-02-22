@@ -5,7 +5,7 @@ name: bookhunter
 steps:
 
     - name: build
-      image: golang
+      image: debian
       volumes:
           - name: config
             path: /app/config
