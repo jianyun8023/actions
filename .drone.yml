@@ -17,6 +17,7 @@ steps:
           CALIBRE_LIBRARY:
               from_secret: calibre_library
       commands:
+          - apt-get update & apt-get install rename
           - mkdir books
           - $BOOKHUNTER_BIN --config /app/config tianlang -e -f epub -f zip -r --source lanzou -t 4 -d ./books -t 2 --ratelimit 120
           - rename  's/.*\.epub$/ebook-$N.epub/' ./books/*.epub
