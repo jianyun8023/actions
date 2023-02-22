@@ -1,19 +1,27 @@
 ---
 kind: pipeline
-type: ssh
+type: docker
 name: bookhunter
 
-server:
-    host:
-        from_secret: host
-    user:
-        from_secret: username
-    ssh_key:
-        from_secret: ssh_key
 steps:
+
     - name: build
+      image: golang
+      volumes:
+          - name: config
+            path: /app/config
+          - name: data
+            path: /data/book
       environment:
           BASE_DIR: /data/book/calibre/down-book
           BOOKHUNTER_BIN: /data/book/bookhunter
       commands:
-          - $BOOKHUNTER_BIN tianlang -e -f epub -f zip -r --source lanzou -t 4 -d $BASE_DIR/tianlang -t 2 --ratelimit 120
+          - $BOOKHUNTER_BIN --config /app/config tianlang -e -f epub -f zip -r --source lanzou -t 4 -d $BASE_DIR/tianlang -t 2 --ratelimit 120
+volumes:
+    - name: config
+      host:
+          path: /root/.config/bookhunter
+    - name: data
+      host:
+          path: /data/book
+
