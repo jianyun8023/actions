@@ -20,7 +20,7 @@ steps:
 volumes:
     - name: config
       host:
-          path: /root/.config/bookhunter
+          path: /data/vdb1/docker/config/bookhunter
     - name: data
       host:
           path: /data/book
