@@ -12,7 +12,9 @@ jobs:
       - name: Build image
         working-directory: "book-helper"
         run:  |
-          docker build -t $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"  .
+          bookhunter_version=$(curl -s "https://api.github.com/repos/bookstairs/bookhunter/releases/latest" | jq '.tag_name' -r | sed 's/v//g')
+          bookimporter_version=$(curl -s "https://api.github.com/repos/jianyun8023/bookimporter/releases/latest" | jq '.tag_name' -r | sed 's/v//g')
+          docker build -t $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}" --build-arg bookhunter_version=${bookhunter_version} --build-arg bookimporter_version=${bookimporter_version} .
 
       - name: Log in to registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
