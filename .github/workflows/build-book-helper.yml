@@ -38,6 +38,7 @@ jobs:
             bookhunter_version=${{ env.bookhunter_version }}
             bookimporter_version=${{ env.bookimporter_version }}
           push: true
+          provenance: false
           tags: |
             ${{ env.IMAGE_ID }}:${{ env.VERSION }}
             ${{ env.IMAGE_ID }}:latest
