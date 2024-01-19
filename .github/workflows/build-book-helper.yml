@@ -9,26 +9,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Build image
-        working-directory: "book-helper"
-        run:  |
-          bookhunter_version=$(curl -s "https://api.github.com/repos/bookstairs/bookhunter/releases/latest" | jq '.tag_name' -r | sed 's/v//g')
-          bookimporter_version=$(curl -s "https://api.github.com/repos/jianyun8023/bookimporter/releases/latest" | jq '.tag_name' -r | sed 's/v//g')
-          docker build -t $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}" --build-arg bookhunter_version=${bookhunter_version} --build-arg bookimporter_version=${bookimporter_version} .
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
 
       - name: Log in to registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
 
-      - name: Push image
-        run: |
+      - name: Set Environment Variable
+        run: | 
+          bookhunter_version=$(curl -s "https://api.github.com/repos/bookstairs/bookhunter/releases/latest" | jq '.tag_name' -r | sed 's/v//g')
+          bookimporter_version=$(curl -s "https://api.github.com/repos/jianyun8023/bookimporter/releases/latest" | jq '.tag_name' -r | sed 's/v//g')
+          
+          echo "bookhunter_version=$bookhunter_version" >> $GITHUB_ENV
+          echo "bookimporter_version=$bookimporter_version" >> $GITHUB_ENV
           IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
-
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-          
-          echo IMAGE_ID=$IMAGE_ID
-          echo VERSION=$VERSION
-          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-          docker tag $IMAGE_NAME $IMAGE_ID:latest
-          docker push $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID:latest
+          echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_ENV
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: docker/book-helper
+          platforms: linux/amd64,linux/arm64
+          labels: runnumber=${GITHUB_RUN_ID}
+          build-args: |
+            bookhunter_version=${{ env.bookhunter_version }}
+            bookimporter_version=${{ env.bookimporter_version }}
+          push: true
+          tags: |
+            $IMAGE_ID:$VERSION
+            $IMAGE_ID:latest
