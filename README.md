@@ -34,7 +34,27 @@
 
 ## docker-easy-connect
 参考了 [Hagb/docker-easyconnect](https://github.com/Hagb/docker-easyconnect)配置，自己手动构建镜像
+## docker-inode
+环境变量 `VNC_PASSWORD=123456`
+docker compose 示例
+```yaml
+version: '3.9'
 
+services:
+  vpn_app:
+    image: ghcr.io/jianyun8023/docker-inode:latest  # 替换为你的镜像名称
+    cap_add:
+      - NET_ADMIN                   # 授予管理网络的能力
+    devices:
+      - /dev/net/tun                # 挂载 TUN 设备
+    ports:
+      - "5903:5900"                 # VNC 端口映射
+      - "1087:1080"                 # socks5 端口映射
+    volumes:
+      # - ./7000:/opt/apps/com.client.inode.amd/files/clientfiles/7000 可以挂载ssl-vpn配置
+    restart: unless-stopped
+```
+查看vpn的路由，请到容器里执行 `ip r | grep tun0`
 ## License
 
 [MIT](https://github.com/jianyun8023/openwrt_action/blob/master/LICENSE) © jianyun8023
