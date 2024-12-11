@@ -38,16 +38,16 @@ iptables -A INPUT -i tun0 -p tcp -j DROP
 
 /etc/init.d/iNodeAuthService restart
 
-arch=$(uname -m)
-case "$arch" in
-  aarch64)
+echo $ARCH
+case "$ARCH" in
+  arm64)
     /opt/apps/com.client.inode.arm/files/.iNode/iNodeClient
     ;;
-  arm64)
+  amd64)
     /opt/apps/com.client.inode.amd/files/.iNode/iNodeClient
     ;;
   *)
-    echo "unknown architecture: $arch"
+    echo "unknown architecture: $ARCH"
     ;;
 esac
 

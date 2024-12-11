@@ -8,7 +8,7 @@ ARG TARGETARCH
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DISPLAY=:0
 ENV VNC_PASSWORD=123456
-
+ENV ARCH=${TARGETARCH}
 # 更新并安装基础依赖
 RUN apt-get update && apt-get install -y \
     x11vnc \
