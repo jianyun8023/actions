@@ -32,19 +32,9 @@ RUN apt-get update && apt-get install -y \
 
 
 # 安装 deb 应用
-COPY ./deb /tmp/deb
+COPY ./deb/inode.${TARGETARCH}_E0626.deb /tmp/inode.deb
 
-RUN if [ "${TARGETARCH}" = "amd64" ]; then \
-        echo "Running on amd64"; \
-        apt install /tmp/deb/inode.amd_E0626.deb && rm /tmp/deb/inode.amd_E0626.deb; \
-    elif [ "${TARGETARCH}" = "arm64" ]; then \
-        echo "Running on arm64"; \
-        apt install /tmp/deb/inode.arm_E0626.deb && rm /tmp/deb/inode.arm_E0626.deb; \
-    else \
-        echo "Running on unknown architecture: ${TARGETARCH}"; \
-        exit 1; \
-    fi
-
+RUN apt install /tmp/inode.deb && rm /tmp/inode.deb;
 # 复制启动脚本
 COPY danted.conf.sample /etc/danted.conf.sample
 COPY start.sh /opt/start.sh
