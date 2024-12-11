@@ -1,6 +1,9 @@
 # 基础镜像选择
 FROM debian:12-slim
 
+# Use the TARGETARCH build argument to get the architecture
+ARG TARGETARCH
+
 # 设置非交互模式，避免安装交互提示
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DISPLAY=:0
@@ -27,9 +30,20 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+
 # 安装 deb 应用
-COPY ./inode.amd_E0626.deb /tmp/inode.deb
-RUN dpkg -i /tmp/inode.deb || apt-get install -f -y && rm /tmp/inode.deb
+COPY ./deb /tmp/deb
+
+RUN if [ "${TARGETARCH}" = "amd64" ]; then \
+        echo "Running on amd64"; \
+        apt install /tmp/deb/inode.amd_E0626.deb && rm /tmp/deb/inode.amd_E0626.deb; \
+    elif [ "${TARGETARCH}" = "arm64" ]; then \
+        echo "Running on arm64"; \
+        apt install /tmp/deb/inode.arm_E0626.deb && rm /tmp/deb/inode.arm_E0626.deb; \
+    else \
+        echo "Running on unknown architecture: ${TARGETARCH}"; \
+        exit 1; \
+    fi
 
 # 复制启动脚本
 COPY danted.conf.sample /etc/danted.conf.sample
