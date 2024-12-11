@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
     iptables \
     wget \
     curl \
-    libgtk2.0-0  libgdk-pixbuf-2.0-0 libjpeg62-turbo \
+    libgtk2.0-0 libgdk-pixbuf-2.0-0 libjpeg62-turbo \
     libglib2.0-dev \
     xclip  \
     xsel \

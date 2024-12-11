@@ -37,5 +37,17 @@ iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -i tun0 -p tcp -j DROP
 
 /etc/init.d/iNodeAuthService restart
-/opt/apps/com.client.inode.amd/files/.iNode/iNodeClient
+
+arch=$(uname -m)
+case "$arch" in
+  aarch64)
+    /opt/apps/com.client.inode.arm/files/.iNode/iNodeClient
+    ;;
+  arm64)
+    /opt/apps/com.client.inode.amd/files/.iNode/iNodeClient
+    ;;
+  *)
+    echo "unknown architecture: $arch"
+    ;;
+esac
 
