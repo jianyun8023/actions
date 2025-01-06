@@ -3,7 +3,7 @@ FROM debian:bookworm
 RUN apt update && apt install -y curl jq calibre
 WORKDIR /data
 ARG TARGETARCH \
-    bookhunter_version=0.14.4 \
+    bookhunter_version=0.14.5 \
     bookimporter_version=0.0.5
 ENV ARCH=${TARGETARCH}
 
