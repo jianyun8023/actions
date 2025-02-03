@@ -19,7 +19,6 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          docker rmi `docker images -q`
           sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d
           chmod +x ./openwrt/tool.sh
           ./openwrt/tool.sh install_dep
