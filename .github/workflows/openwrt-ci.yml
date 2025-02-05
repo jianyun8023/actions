@@ -2,8 +2,9 @@ name: OpenWrt-CI
 
 on: workflow_dispatch
 env:
-  REPO_URL: https://github.com/coolsnowwolf/lede
-  REPO_BRANCH: master
+  REPO_URL: https://github.com/openwrt/openwrt.git
+  REPO_BRANCH: 24.10.0-rc7
+  SOURCE_PATH: './openwrt-source'
   CONFIG_FILE: .config
   SSH_ACTIONS: false
   TZ: Asia/Shanghai
@@ -39,14 +40,14 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: OpenWrt Packages
-          path: ./openwrt/bin/packages/
+          path: ${{env.SOURCE_PATH}}/bin/packages/
       - name: Clean Packages
-        run: rm -rf ./openwrt/bin/targets/x86/64/packages
+        run: rm -rf ${{env.SOURCE_PATH}}/bin/targets/x86/64/packages
       - name: Upload OpenWrt firmware
         uses: actions/upload-artifact@master
         with:
           name: OpenWrt firmware
           path: |
-            ./openwrt/bin/targets/x86/64/
+            ${{env.SOURCE_PATH}}/bin/targets/
       - name: WeChat notification
         run: curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=OpenWrt_X64编译完成

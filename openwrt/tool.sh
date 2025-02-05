@@ -1,7 +1,14 @@
 #!/bin/bash
 
-source_path="./openwrt"
-branch=24.10.0-rc7
+#source_path="./openwrt-source"
+#branch=24.10.0-rc7
+
+# env
+# REPO_URL=https://github.com/openwrt/openwrt
+# REPO_BRANCH=24.10.0-rc7
+# CONFIG_FILE=r5s.config
+source_path=$SOURCE_PATH
+
 
 function install_dep() {
   docker rmi `docker images -q`
@@ -15,7 +22,7 @@ function install_dep() {
 }
 
 function clone_source_code() {
-  git clone --depth=1 https://github.com/openwrt/openwrt -b $branch $source_path
+  git clone --depth=1 $REPO_URL -b $REPO_BRANCH $source_path
   cd $source_path || exit 1
 }
 
