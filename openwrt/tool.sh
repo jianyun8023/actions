@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source_path="./lede"
+source_path="./openwrt"
+branch=24.10.0-rc7
 
 function install_dep() {
   docker rmi `docker images -q`
@@ -14,9 +15,8 @@ function install_dep() {
 }
 
 function clone_source_code() {
-  git clone https://github.com/coolsnowwolf/lede $source_path
+  git clone --depth=1 https://github.com/openwrt/openwrt -b $branch $source_path
   cd $source_path || exit 1
-  sed -i 's/#src-git helloworld/src-git helloworld/g' ./feeds.conf.default
 }
 
 function update_feeds() {
@@ -27,7 +27,7 @@ function update_feeds() {
 
 function build_config() {
   cd $source_path || exit 1
-  cp -f "../openwrt/x86_64.config" ".config"
+  cp -f "../openwrt/r5s.config" ".config"
   chmod +x ../openwrt/diy.sh
   ../openwrt/diy.sh "$(pwd)"
   du -h --max-depth=2 ./

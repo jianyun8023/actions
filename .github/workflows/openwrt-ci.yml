@@ -23,8 +23,9 @@ jobs:
           chmod +x ./openwrt/tool.sh
           ./openwrt/tool.sh install_dep
           df -h
-
-      - name: clone lede
+      - name: Install LLVM
+        uses: sbwml/actions@install-llvm
+      - name: clone OpenWrt
         run: ./openwrt/tool.sh clone
       - name: Update feeds
         run: ./openwrt/tool.sh update_feeds
@@ -38,14 +39,14 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: OpenWrt Packages
-          path: ./lede/bin/packages/
+          path: ./openwrt/bin/packages/
       - name: Clean Packages
-        run: rm -rf ./lede/bin/targets/x86/64/packages
+        run: rm -rf ./openwrt/bin/targets/x86/64/packages
       - name: Upload OpenWrt firmware
         uses: actions/upload-artifact@master
         with:
           name: OpenWrt firmware
           path: |
-            ./lede/bin/targets/x86/64/
+            ./openwrt/bin/targets/x86/64/
       - name: WeChat notification
         run: curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=OpenWrt_X64编译完成
