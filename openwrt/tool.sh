@@ -22,7 +22,7 @@ function install_dep() {
 }
 
 function clone_source_code() {
-  git clone --depth=1 $REPO_URL -b $REPO_BRANCH $source_path
+  git clone $REPO_URL -b $REPO_BRANCH $source_path
   cd $source_path || exit 1
 }
 
