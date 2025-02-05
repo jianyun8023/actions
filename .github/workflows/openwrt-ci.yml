@@ -24,6 +24,8 @@ jobs:
           chmod +x ./openwrt/tool.sh
           ./openwrt/tool.sh install_dep
           df -h
+      - name: Build System Setup
+        uses: sbwml/actions@openwrt-build-setup
       - name: Install LLVM
         uses: sbwml/actions@install-llvm
       - name: clone OpenWrt
