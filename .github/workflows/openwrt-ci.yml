@@ -3,7 +3,7 @@ name: OpenWrt-CI
 on: workflow_dispatch
 env:
   REPO_URL: https://github.com/openwrt/openwrt
-  REPO_BRANCH: 24.10.0-rc7
+  REPO_BRANCH: v24.10.0-rc7
   SOURCE_PATH: './openwrt-source'
   CONFIG_FILE: .config
   SSH_ACTIONS: false
