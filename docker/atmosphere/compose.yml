@@ -1,0 +1,15 @@
+services:
+  atmosphere:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # 如在 Apple Silicon 上想强制使用 x86_64 镜像，可取消下一行注释（需 Docker Desktop/QEMU 支持）
+    # platform: linux/amd64
+    environment:
+      # 可覆盖引用的分支/标签/提交，例如: ATMOSPHERE_REF=1.9.3 或 ATMOSPHERE_REF=master
+      - ATMOSPHERE_REF=1.9.3
+    volumes:
+      # 构建产物输出到宿主机目录：docker/atmosphere/dist
+      - ./dist:/out
+    # 一次性任务，运行完成后退出
+    command: /usr/local/bin/build-atmosphere.sh
