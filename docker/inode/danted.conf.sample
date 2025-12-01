@@ -9,5 +9,6 @@ client pass {
         from: 0/0 to: 0/0
 }
 socks pass {
-        from: 0/0 to: 0.0.0.0/0
+        from: 0/0 to: 0/0
+        protocol: tcp udp
 }

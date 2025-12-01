@@ -36,6 +36,10 @@ do
 done
 )&
 
+# 使用 iptables-legacy 确保兼容性
+update-alternatives --set iptables /usr/sbin/iptables-legacy 2>/dev/null || true
+update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy 2>/dev/null || true
+
 iptables -t nat -A POSTROUTING -o tun0 -j MASQUERADE
 
 # 拒绝 tun0 侧主动请求的连接.
