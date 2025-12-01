@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  vpn_app:
+    image: ghcr.io/jianyun8023/docker-inode:latest
+    #build:
+    #  context: .                # Dockerfile 所在目录
+    #  dockerfile: Dockerfile    # Dockerfile 文件名（可省略，默认为 Dockerfile）
+    # platform: linux/amd64  
+    cap_add:
+      - NET_ADMIN                   # 授予管理网络的能力
+    devices:
+      - /dev/net/tun                # 挂载 TUN 设备
+    ports:
+      - "5901:5900"                 # VNC 端口映射
+      - "1080:1080"                 # socks5 端口映射（建议使用固定映射）
+    volumes:
+      - ./aaa.icnf:/opt/apps/com.client.inode.arm/files/clientfiles/7000/aaa.icnf
+    stdin_open: true
+    environment:
+      - VNC_PASSWORD=123456
+    tty: true

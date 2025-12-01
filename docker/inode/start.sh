@@ -20,13 +20,19 @@ sed s/^#external-lines/"$externals"/ -i /run/danted.conf
 # 在虚拟网络设备 tun0 打开时运行 danted 代理服务器
 [ -n "$NODANTED" ] || (while true
 do
-sleep 5
-[ -d /sys/class/net/tun0 ] && {
-	chmod a+w /tmp
-	open_port 1080
-	su daemon -s /usr/sbin/danted -f /run/danted.conf
-	close_port 1080
-}
+	sleep 5
+	# 检查 tun0 是否存在且 danted 未在运行
+	if [ -d /sys/class/net/tun0 ] && ! pgrep -x danted > /dev/null 2>&1; then
+		chmod a+w /tmp
+		echo "Starting danted on port 1080..."
+		su daemon -s /usr/sbin/danted -f /run/danted.conf
+		sleep 1
+		if pgrep -x danted > /dev/null 2>&1; then
+			echo "danted started successfully"
+		else
+			echo "Failed to start danted"
+		fi
+	fi
 done
 )&
 
