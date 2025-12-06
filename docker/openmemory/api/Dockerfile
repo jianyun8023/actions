@@ -1,11 +1,10 @@
-# OpenMemory API - Multi-arch Dockerfile
-# Based on: https://github.com/mem0ai/mem0 (官方仓库)
+# syntax=docker/dockerfile:1
+# OpenMemory API - Multi-arch Dockerfile (Optimized)
 # Supports: linux/amd64, linux/arm64
 # Fixed: PostgreSQL support (check_same_thread issue)
 
 FROM python:3.12-slim AS base
 
-# Metadata
 LABEL maintainer="jianyun8023" \
       org.opencontainers.image.title="OpenMemory API" \
       org.opencontainers.image.description="OpenMemory API - Personal memory layer for LLMs (PostgreSQL Fixed)" \
@@ -14,58 +13,49 @@ LABEL maintainer="jianyun8023" \
 
 WORKDIR /usr/src/openmemory
 
-# Builder stage - Build from local source
+# ============================================
+# Builder stage - Install dependencies first
+# ============================================
 FROM base AS builder
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
+# Install build dependencies with cache
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ && rm -rf /var/lib/apt/lists/*
 
-# Copy local source code (不复制 config.json，允许用户通过挂载或 API 配置)
-COPY requirements.txt /usr/src/openmemory/
-COPY main.py /usr/src/openmemory/
-COPY default_config.json /usr/src/openmemory/
-# config.json 不复制到镜像，用户可通过以下方式配置：
-# 1. 挂载 config.json 文件
-# 2. 通过 API /api/v1/config 配置
-COPY alembic.ini /usr/src/openmemory/
-COPY alembic /usr/src/openmemory/alembic
-COPY app /usr/src/openmemory/app
+# 关键优化：先复制 requirements.txt 并安装依赖
+# 这样代码修改时不会重新安装依赖
+COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --user -r requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --user -r /usr/src/openmemory/requirements.txt
+# 再复制源代码（变化频繁，放在依赖安装之后）
+COPY main.py default_config.json alembic.ini ./
+COPY alembic/ alembic/
+COPY app/ app/
 
-# Runtime stage
+# ============================================
+# Runtime stage - Minimal production image
+# ============================================
 FROM base AS runtime
 
-# Create non-root user
-RUN useradd -m -u 1001 -s /bin/bash openmemory
-
-# Copy installed packages and application from builder
-COPY --from=builder /root/.local /home/openmemory/.local
-COPY --from=builder /usr/src/openmemory /usr/src/openmemory
-
-# Set PATH for user-installed packages
-ENV PATH=/home/openmemory/.local/bin:$PATH
-
-# Fix ownership
-RUN chown -R openmemory:openmemory /usr/src/openmemory
-
-# Create data directories
-RUN mkdir -p /var/lib/openmemory && \
+# Create non-root user and directories
+RUN useradd -m -u 1001 -s /bin/bash openmemory && \
+    mkdir -p /var/lib/openmemory && \
     chown -R openmemory:openmemory /var/lib/openmemory
 
-# Switch to non-root user
+# Copy installed packages and application
+COPY --from=builder /root/.local /home/openmemory/.local
+COPY --from=builder --chown=openmemory:openmemory /usr/src/openmemory /usr/src/openmemory
+
+ENV PATH=/home/openmemory/.local/bin:$PATH
+
 USER openmemory
 
-# Health check (检查根路径而不是 /docs，更轻量)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8765/').read()" || exit 1
 
 EXPOSE 8765
 
-# Default command (can be overridden in docker-compose)
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8765"]
-
