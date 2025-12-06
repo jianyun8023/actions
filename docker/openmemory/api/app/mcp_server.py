@@ -64,6 +64,23 @@ sse = SseServerTransport("/mcp/messages/")
 # Timeout for memory operations (in seconds)
 MEMORY_OPERATION_TIMEOUT = int(os.environ.get("MEMORY_OPERATION_TIMEOUT", "120"))
 
+# Maximum input text length (characters) - prevents LLM context overflow
+# Default 8000 chars ≈ 2000-4000 tokens depending on language
+MAX_INPUT_TEXT_LENGTH = int(os.environ.get("MAX_INPUT_TEXT_LENGTH", "8000"))
+
+# Whether to truncate or reject long inputs
+TRUNCATE_LONG_INPUT = os.environ.get("TRUNCATE_LONG_INPUT", "true").lower() in ("true", "1", "yes")
+
+
+def _truncate_text(text: str, max_length: int) -> str:
+    """Truncate text to max_length, adding ellipsis if truncated."""
+    if len(text) <= max_length:
+        return text
+    # Keep first 70% and last 20% to preserve both context and ending
+    first_part = int(max_length * 0.7)
+    last_part = int(max_length * 0.2)
+    return text[:first_part] + "\n...[truncated]...\n" + text[-last_part:]
+
 
 def _add_memory_sync(memory_client, text: str, uid: str, client_name: str):
     """Synchronous wrapper for memory_client.add() to run in thread pool."""
@@ -88,7 +105,17 @@ async def add_memories(text: str) -> str:
         return "Error: client_name not provided"
 
     start_time = time.time()
-    logging.info(f"[MCP] add_memories started for user={uid}, client={client_name}, text_length={len(text)}")
+    original_length = len(text)
+    logging.info(f"[MCP] add_memories started for user={uid}, client={client_name}, text_length={original_length}")
+
+    # Check input text length
+    if original_length > MAX_INPUT_TEXT_LENGTH:
+        if TRUNCATE_LONG_INPUT:
+            text = _truncate_text(text, MAX_INPUT_TEXT_LENGTH)
+            logging.warning(f"[MCP] Input text truncated from {original_length} to {len(text)} chars (max: {MAX_INPUT_TEXT_LENGTH})")
+        else:
+            logging.error(f"[MCP] Input text too long: {original_length} chars (max: {MAX_INPUT_TEXT_LENGTH})")
+            return f"Error: Input text too long ({original_length} chars). Maximum allowed: {MAX_INPUT_TEXT_LENGTH} chars. Set TRUNCATE_LONG_INPUT=true to auto-truncate."
 
     # Get memory client safely
     logging.info("[MCP] Getting memory client...")
