@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Copy, Check } from "lucide-react";
@@ -45,14 +45,26 @@ const allTabs = [{ key: "mcp", label: "MCP Link", icon: "🔗" }, ...clientTabs]
 
 export const Install = () => {
   const [copiedTab, setCopiedTab] = useState<string | null>(null);
+  const [mcpBaseUrl, setMcpBaseUrl] = useState<string>("");
   const user = process.env.NEXT_PUBLIC_USER_ID || "user";
 
-  const URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8765";
+  // 获取 MCP 的完整 URL
+  // MCP 路由在 API 服务上是 /mcp/...（没有 /api 前缀）
+  // 需要使用当前域名 + /mcp/...
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // 直接使用当前域名作为 MCP 基础 URL
+      setMcpBaseUrl(window.location.origin);
+    }
+  }, []);
+
+  // MCP URL = 当前域名（SSR 时使用空字符串，客户端会立即更新）
+  const displayMcpUrl = mcpBaseUrl;
 
   const handleCopy = async (tab: string, isMcp: boolean = false) => {
     const text = isMcp
-      ? `${URL}/mcp/openmemory/sse/${user}`
-      : `npx @openmemory/install local ${URL}/mcp/${tab}/sse/${user} --client ${tab}`;
+      ? `${displayMcpUrl}/mcp/openmemory/sse/${user}`
+      : `npx @openmemory/install local ${displayMcpUrl}/mcp/${tab}/sse/${user} --client ${tab}`;
 
     try {
       // Try using the Clipboard API first
@@ -132,7 +144,7 @@ export const Install = () => {
               <div className="relative">
                 <pre className="bg-zinc-800 px-4 py-3 rounded-md overflow-x-auto text-sm">
                   <code className="text-gray-300">
-                    {URL}/mcp/openmemory/sse/{user}
+                    {displayMcpUrl}/mcp/openmemory/sse/{user}
                   </code>
                 </pre>
                 <div>
@@ -168,7 +180,7 @@ export const Install = () => {
                 <div className="relative">
                   <pre className="bg-zinc-800 px-4 py-3 rounded-md overflow-x-auto text-sm">
                     <code className="text-gray-300">
-                      {`npx @openmemory/install local ${URL}/mcp/${key}/sse/${user} --client ${key}`}
+                      {`npx @openmemory/install local ${displayMcpUrl}/mcp/${key}/sse/${user} --client ${key}`}
                     </code>
                   </pre>
                   <div>
