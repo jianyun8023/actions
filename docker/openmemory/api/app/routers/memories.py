@@ -218,7 +218,7 @@ class CreateMemoryRequest(BaseModel):
 
 
 # Create new memory
-@router.post("/")
+@router.post("")
 async def create_memory(
     request: CreateMemoryRequest,
     db: Session = Depends(get_db)
@@ -352,7 +352,7 @@ class DeleteMemoriesRequest(BaseModel):
     user_id: str
 
 # Delete multiple memories
-@router.delete("/")
+@router.delete("")
 async def delete_memories(
     request: DeleteMemoriesRequest,
     db: Session = Depends(get_db)

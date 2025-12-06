@@ -17,7 +17,7 @@ def get_app_or_404(db: Session, app_id: UUID) -> App:
     return app
 
 # List all apps with filtering
-@router.get("/")
+@router.get("")
 async def list_apps(
     name: Optional[str] = None,
     is_active: Optional[bool] = None,
