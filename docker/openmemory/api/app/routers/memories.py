@@ -302,7 +302,7 @@ async def create_memory(
                     history = MemoryStatusHistory(
                         memory_id=memory_id,
                         changed_by=user.id,
-                        old_state=MemoryState.deleted if existing_memory else MemoryState.deleted,
+                        old_state=existing_memory.state if existing_memory else MemoryState.deleted,
                         new_state=MemoryState.active
                     )
                     db.add(history)
@@ -513,6 +513,7 @@ class UpdateMemoryRequest(BaseModel):
     memory_content: str
     user_id: str
 
+
 # Update a memory
 @router.put("/{memory_id}")
 async def update_memory(
@@ -523,10 +524,46 @@ async def update_memory(
     user = db.query(User).filter(User.user_id == request.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
     memory = get_memory_or_404(db, memory_id)
+    old_content = memory.content
+    
+    # Update database record
     memory.content = request.memory_content
     db.commit()
     db.refresh(memory)
+    
+    # Update vector store if content changed
+    if old_content != request.memory_content:
+        try:
+            memory_client = get_memory_client()
+            if memory_client and hasattr(memory_client, 'vector_store') and hasattr(memory_client, 'embedding_model'):
+                # Generate new embedding
+                new_vector = memory_client.embedding_model.embed(request.memory_content, "add")
+                
+                # Update payload in vector store
+                payload = {
+                    "data": request.memory_content,
+                    "user_id": request.user_id,
+                    "source_app": "openmemory",
+                }
+                
+                # Update vector store (delete old, insert new)
+                try:
+                    memory_client.vector_store.delete(vector_id=str(memory_id))
+                except Exception:
+                    pass  # May not exist in vector store
+                
+                memory_client.vector_store.insert(
+                    vectors=[new_vector],
+                    payloads=[payload],
+                    ids=[str(memory_id)]
+                )
+                logging.info(f"Successfully updated memory {memory_id} in vector store")
+        except Exception as e:
+            logging.warning(f"Failed to update memory {memory_id} in vector store: {e}")
+            # Continue even if vector store update fails - DB is source of truth
+    
     return memory
 
 class FilterMemoriesRequest(BaseModel):

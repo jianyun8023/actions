@@ -187,11 +187,27 @@ class MemoryAccessLog(Base):
         Index('idx_access_app_time', 'app_id', 'accessed_at'),
     )
 
-def categorize_memory(memory: Memory, db: Session) -> None:
-    """Categorize a memory using OpenAI and store the categories in the database."""
+import os
+import threading
+
+
+def categorize_memory_sync(memory_id: uuid.uuid4, memory_content: str) -> None:
+    """
+    Categorize a memory using LLM and store the categories in the database.
+    This function runs in a separate thread to avoid blocking the main transaction.
+    """
+    from app.database import SessionLocal
+    
+    db = SessionLocal()
     try:
-        # Get categories from OpenAI
-        categories = get_categories_for_memory(memory.content)
+        # Get categories from LLM
+        categories = get_categories_for_memory(memory_content)
+
+        # Get the memory object
+        memory = db.query(Memory).filter(Memory.id == memory_id).first()
+        if not memory:
+            print(f"Memory {memory_id} not found for categorization")
+            return
 
         # Get or create categories in the database
         for category_name in categories:
@@ -222,22 +238,40 @@ def categorize_memory(memory: Memory, db: Session) -> None:
                 )
 
         db.commit()
+        print(f"Successfully categorized memory {memory_id}")
     except Exception as e:
         db.rollback()
-        print(f"Error categorizing memory: {e}")
+        print(f"Error categorizing memory {memory_id}: {e}")
+    finally:
+        db.close()
+
+
+def schedule_categorization(memory_id: uuid.uuid4, memory_content: str) -> None:
+    """
+    Schedule memory categorization to run asynchronously in a background thread.
+    This prevents blocking the main database transaction.
+    """
+    # Check if auto-categorization is enabled (default: True)
+    if os.environ.get("DISABLE_AUTO_CATEGORIZATION", "").lower() in ("true", "1", "yes"):
+        return
+    
+    thread = threading.Thread(
+        target=categorize_memory_sync,
+        args=(memory_id, memory_content),
+        daemon=True
+    )
+    thread.start()
 
 
 @event.listens_for(Memory, 'after_insert')
 def after_memory_insert(mapper, connection, target):
-    """Trigger categorization after a memory is inserted."""
-    db = Session(bind=connection)
-    categorize_memory(target, db)
-    db.close()
+    """Trigger async categorization after a memory is inserted."""
+    # Schedule categorization in background thread (non-blocking)
+    schedule_categorization(target.id, target.content)
 
 
 @event.listens_for(Memory, 'after_update')
 def after_memory_update(mapper, connection, target):
-    """Trigger categorization after a memory is updated."""
-    db = Session(bind=connection)
-    categorize_memory(target, db)
-    db.close()
+    """Trigger async categorization after a memory is updated."""
+    # Schedule categorization in background thread (non-blocking)
+    schedule_categorization(target.id, target.content)
