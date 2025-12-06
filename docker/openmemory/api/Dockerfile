@@ -29,10 +29,7 @@ RUN git clone --depth 1 https://github.com/mem0ai/mem0.git /tmp/mem0 && \
     cp -r /tmp/mem0/openmemory/api/* /usr/src/openmemory/ && \
     rm -rf /tmp/mem0
 
-# Copy fixed database.py (PostgreSQL support)
-COPY database_fixed.py /usr/src/openmemory/app/database.py
-
-# Install Python dependencies
+# Install Python dependencies first
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Runtime stage
@@ -44,6 +41,9 @@ RUN useradd -m -u 1001 -s /bin/bash openmemory
 # Copy installed packages and application from builder
 COPY --from=builder /root/.local /home/openmemory/.local
 COPY --from=builder /usr/src/openmemory /usr/src/openmemory
+
+# Copy fixed database.py (PostgreSQL support) - 在 runtime stage 执行
+COPY --chown=openmemory:openmemory database_fixed.py /usr/src/openmemory/app/database.py
 
 # Set PATH for user-installed packages
 ENV PATH=/home/openmemory/.local/bin:$PATH
