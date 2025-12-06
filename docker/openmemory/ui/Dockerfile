@@ -31,21 +31,16 @@ RUN pnpm install --frozen-lockfile
 FROM base AS builder
 WORKDIR /app
 
-# Define ARG for build-time placeholders
-ARG NEXT_PUBLIC_API_URL_PLACEHOLDER=__NEXT_PUBLIC_API_URL_PLACEHOLDER__
-ARG NEXT_PUBLIC_USER_ID_PLACEHOLDER=__NEXT_PUBLIC_USER_ID_PLACEHOLDER__
-
-# Set placeholders as environment variables during build
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL_PLACEHOLDER
-ENV NEXT_PUBLIC_USER_ID=$NEXT_PUBLIC_USER_ID_PLACEHOLDER
-
 # Copy dependencies and source code
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY . .
 
-# Use dev config for build
+# Use dev config and create .env with placeholder values
+# 这些占位符会在运行时被 entrypoint.sh 替换为实际环境变量值
 RUN cp next.config.dev.mjs next.config.mjs && \
+    echo "NEXT_PUBLIC_API_URL=NEXT_PUBLIC_API_URL" > .env && \
+    echo "NEXT_PUBLIC_USER_ID=NEXT_PUBLIC_USER_ID" >> .env && \
     pnpm build
 
 # Runtime stage
@@ -71,9 +66,9 @@ RUN sed -i 's/\r$//' /home/nextjs/entrypoint.sh && \
 # Switch to non-root user
 USER nextjs
 
-# Health check
+# Health check (使用 Node.js 内置 http 模块，无需额外依赖)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+    CMD node -e "require('http').get('http://localhost:3000/', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"
 
 EXPOSE 3000
 ENV PORT=3000

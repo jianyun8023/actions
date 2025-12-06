@@ -99,7 +99,4 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/${{ env.UI_IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            NEXT_PUBLIC_API_URL_PLACEHOLDER=__NEXT_PUBLIC_API_URL_PLACEHOLDER__
-            NEXT_PUBLIC_USER_ID_PLACEHOLDER=__NEXT_PUBLIC_USER_ID_PLACEHOLDER__
 

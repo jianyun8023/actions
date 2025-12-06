@@ -49,9 +49,9 @@ RUN mkdir -p /var/lib/openmemory && \
 # Switch to non-root user
 USER openmemory
 
-# Health check
+# Health check (检查根路径而不是 /docs，更轻量)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8765/docs').read()" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8765/').read()" || exit 1
 
 EXPOSE 8765
 
