@@ -54,7 +54,7 @@ ENV PATH=/home/openmemory/.local/bin:$PATH
 USER openmemory
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8765/').read()" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8765/health').read()" || exit 1
 
 EXPOSE 8765
 

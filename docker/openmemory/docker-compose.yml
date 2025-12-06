@@ -51,7 +51,7 @@ services:
     networks:
       - openmemory-network
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8765/').read()"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8765/health').read()"]
       interval: 30s
       timeout: 10s
       retries: 3
