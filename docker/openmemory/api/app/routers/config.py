@@ -1,3 +1,6 @@
+import json
+import os
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from app.database import get_db
@@ -48,10 +51,6 @@ class ConfigSchema(BaseModel):
 
 def get_default_configuration():
     """Get the default configuration, checking for mounted config.json first."""
-    import json
-    import os
-    from pathlib import Path
-    
     # 1. 优先读取挂载的 config.json 文件
     config_path = Path("/usr/src/openmemory/config.json")
     if config_path.exists():

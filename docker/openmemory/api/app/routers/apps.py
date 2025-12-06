@@ -2,23 +2,42 @@ from typing import Optional
 from uuid import UUID
 
 from app.database import get_db
-from app.models import App, Memory, MemoryAccessLog, MemoryState
+from app.models import App, Memory, MemoryAccessLog, MemoryState, User
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc, func
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, selectinload
 
 router = APIRouter(prefix="/api/v1/apps", tags=["apps"])
 
+
 # Helper functions
+def get_user_or_404(db: Session, user_id: str) -> User:
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
 def get_app_or_404(db: Session, app_id: UUID) -> App:
     app = db.query(App).filter(App.id == app_id).first()
     if not app:
         raise HTTPException(status_code=404, detail="App not found")
     return app
 
+
+def get_app_with_permission(db: Session, app_id: UUID, user_id: str) -> App:
+    """Get app and verify user has permission to access it."""
+    user = get_user_or_404(db, user_id)
+    app = get_app_or_404(db, app_id)
+    if app.owner_id != user.id:
+        raise HTTPException(status_code=403, detail="You don't have permission to access this app")
+    return app
+
+
 # List all apps with filtering
 @router.get("/")
 async def list_apps(
+    user_id: str = Query(..., description="User ID to filter apps"),
     name: Optional[str] = None,
     is_active: Optional[bool] = None,
     sort_by: str = 'name',
@@ -27,6 +46,9 @@ async def list_apps(
     page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
+    # Verify user exists
+    user = get_user_or_404(db, user_id)
+
     # Create a subquery for memory counts
     memory_counts = db.query(
         Memory.app_id,
@@ -41,12 +63,12 @@ async def list_apps(
         func.count(func.distinct(MemoryAccessLog.memory_id)).label('access_count')
     ).group_by(MemoryAccessLog.app_id).subquery()
 
-    # Base query
+    # Base query - filter by user's apps only
     query = db.query(
         App,
         func.coalesce(memory_counts.c.memory_count, 0).label('total_memories_created'),
         func.coalesce(access_counts.c.access_count, 0).label('total_memories_accessed')
-    )
+    ).filter(App.owner_id == user.id)
 
     # Join with subqueries
     query = query.outerjoin(
@@ -131,14 +153,20 @@ async def list_app_memories(
     db: Session = Depends(get_db)
 ):
     get_app_or_404(db, app_id)
-    query = db.query(Memory).filter(
+    
+    # Base query for filtering
+    base_query = db.query(Memory).filter(
         Memory.app_id == app_id,
         Memory.state.in_([MemoryState.active, MemoryState.paused, MemoryState.archived])
     )
-    # Add eager loading for categories
-    query = query.options(joinedload(Memory.categories))
-    total = query.count()
-    memories = query.order_by(Memory.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    
+    # Get total count without eager loading to avoid cartesian product
+    total = base_query.count()
+    
+    # Apply pagination and eager loading (use selectinload to avoid duplicate rows)
+    memories = base_query.options(
+        selectinload(Memory.categories)
+    ).order_by(Memory.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
 
     return {
         "total": total,
@@ -166,11 +194,9 @@ async def list_app_accessed_memories(
     page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
-    
-    # Get memories with access counts
-    query = db.query(
-        Memory,
-        func.count(MemoryAccessLog.id).label("access_count")
+    # Base query for counting
+    base_query = db.query(
+        Memory.id
     ).join(
         MemoryAccessLog,
         Memory.id == MemoryAccessLog.memory_id
@@ -178,15 +204,34 @@ async def list_app_accessed_memories(
         MemoryAccessLog.app_id == app_id
     ).group_by(
         Memory.id
-    ).order_by(
-        desc("access_count")
     )
-
-    # Add eager loading for categories
-    query = query.options(joinedload(Memory.categories))
-
-    total = query.count()
-    results = query.offset((page - 1) * page_size).limit(page_size).all()
+    
+    # Get total count
+    total = base_query.count()
+    
+    # Get memories with access counts (use subquery to avoid cartesian product)
+    access_subquery = db.query(
+        MemoryAccessLog.memory_id,
+        func.count(MemoryAccessLog.id).label("access_count")
+    ).filter(
+        MemoryAccessLog.app_id == app_id
+    ).group_by(
+        MemoryAccessLog.memory_id
+    ).subquery()
+    
+    # Join with memory and apply pagination
+    results = db.query(
+        Memory,
+        access_subquery.c.access_count
+    ).join(
+        access_subquery,
+        Memory.id == access_subquery.c.memory_id
+    ).options(
+        selectinload(Memory.categories),
+        selectinload(Memory.app)
+    ).order_by(
+        desc(access_subquery.c.access_count)
+    ).offset((page - 1) * page_size).limit(page_size).all()
 
     return {
         "total": total,
@@ -215,9 +260,11 @@ async def list_app_accessed_memories(
 async def update_app_details(
     app_id: UUID,
     is_active: bool,
+    user_id: str = Query(..., description="User ID for permission verification"),
     db: Session = Depends(get_db)
 ):
-    app = get_app_or_404(db, app_id)
+    # Verify user has permission to update this app
+    app = get_app_with_permission(db, app_id, user_id)
     app.is_active = is_active
     db.commit()
     return {"status": "success", "message": "Updated app details successfully"}

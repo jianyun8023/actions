@@ -65,13 +65,16 @@ async def readiness_check():
     }
     
     # 检查数据库连接
+    db = None
     try:
         db = SessionLocal()
         db.execute(text("SELECT 1"))
-        db.close()
         checks["database"] = True
     except Exception as e:
         checks["database_error"] = str(e)
+    finally:
+        if db:
+            db.close()
     
     # 检查 Qdrant 连接（可选）
     qdrant_host = os.getenv("QDRANT_HOST")
