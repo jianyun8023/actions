@@ -47,7 +47,33 @@ class ConfigSchema(BaseModel):
     mem0: Optional[Mem0Config] = None
 
 def get_default_configuration():
-    """Get the default configuration with sensible defaults for LLM and embedder."""
+    """Get the default configuration, checking for mounted config.json first."""
+    import json
+    import os
+    from pathlib import Path
+    
+    # 1. 优先读取挂载的 config.json 文件
+    config_path = Path("/usr/src/openmemory/config.json")
+    if config_path.exists():
+        try:
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+                if "mem0" in config and config["mem0"]:
+                    print(f"[INFO] Loaded configuration from mounted {config_path}")
+                    # 确保 openmemory 配置存在
+                    if "openmemory" not in config:
+                        config["openmemory"] = {"custom_instructions": None}
+                    # 确保 vector_store 配置存在（设为 None 表示使用环境变量检测）
+                    if "vector_store" not in config["mem0"]:
+                        config["mem0"]["vector_store"] = None
+                    return config
+        except Exception as e:
+            print(f"[WARNING] Failed to load {config_path}: {e}")
+    
+    # 2. 使用环境变量获取 base_url（支持硅基流动等兼容服务）
+    base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    
+    # 3. 返回默认配置（硬编码）
     return {
         "openmemory": {
             "custom_instructions": None
@@ -59,14 +85,16 @@ def get_default_configuration():
                     "model": "gpt-4o-mini",
                     "temperature": 0.1,
                     "max_tokens": 2000,
-                    "api_key": "env:OPENAI_API_KEY"
+                    "api_key": "env:OPENAI_API_KEY",
+                    "base_url": base_url
                 }
             },
             "embedder": {
                 "provider": "openai",
                 "config": {
                     "model": "text-embedding-3-small",
-                    "api_key": "env:OPENAI_API_KEY"
+                    "api_key": "env:OPENAI_API_KEY",
+                    "base_url": base_url
                 }
             },
             "vector_store": None
@@ -152,9 +180,17 @@ async def update_configuration(config: ConfigSchema, db: Session = Depends(get_d
             updated_config["openmemory"] = {}
         updated_config["openmemory"].update(config.openmemory.dict(exclude_none=True))
     
-    # Update mem0 settings
-    updated_config["mem0"] = config.mem0.dict(exclude_none=True)
+    # Update mem0 settings if provided
+    if config.mem0 is not None:
+        updated_config["mem0"] = config.mem0.dict(exclude_none=True)
+        # 确保 vector_store 存在
+        if "vector_store" not in updated_config["mem0"]:
+            updated_config["mem0"]["vector_store"] = None
     
+    # Save and reset memory client
+    save_config_to_db(db, updated_config)
+    reset_memory_client()
+    return updated_config
 
 @router.patch("/", response_model=ConfigSchema)
 async def patch_configuration(config_update: ConfigSchema, db: Session = Depends(get_db)):

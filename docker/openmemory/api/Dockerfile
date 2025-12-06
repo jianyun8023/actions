@@ -23,11 +23,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy local source code
+# Copy local source code (不复制 config.json，允许用户通过挂载或 API 配置)
 COPY requirements.txt /usr/src/openmemory/
 COPY main.py /usr/src/openmemory/
 COPY default_config.json /usr/src/openmemory/
-COPY config.json /usr/src/openmemory/
+# config.json 不复制到镜像，用户可通过以下方式配置：
+# 1. 挂载 config.json 文件
+# 2. 通过 API /api/v1/config 配置
 COPY alembic.ini /usr/src/openmemory/
 COPY alembic /usr/src/openmemory/alembic
 COPY app /usr/src/openmemory/app

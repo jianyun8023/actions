@@ -133,6 +133,23 @@ def reset_memory_client():
     _config_hash = None
 
 
+def _load_mounted_config():
+    """Load configuration from mounted config.json if exists."""
+    from pathlib import Path
+    
+    config_path = Path("/usr/src/openmemory/config.json")
+    if config_path.exists():
+        try:
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+                if "mem0" in config and config["mem0"]:
+                    print(f"[INFO] Loaded LLM/Embedder configuration from mounted {config_path}")
+                    return config["mem0"]
+        except Exception as e:
+            print(f"[WARNING] Failed to load mounted config.json: {e}")
+    return None
+
+
 def get_default_memory_config():
     """Get default memory client configuration with sensible defaults."""
     # Detect vector store based on environment variables
@@ -236,27 +253,52 @@ def get_default_memory_config():
     
     print(f"Auto-detected vector store: {vector_store_provider} with config: {vector_store_config}")
     
+    # 检查是否有挂载的配置文件
+    mounted_config = _load_mounted_config()
+    
+    # 使用环境变量获取 base_url（支持硅基流动等兼容服务）
+    base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    
+    # 默认 LLM 和 Embedder 配置
+    default_llm = {
+        "provider": "openai",
+        "config": {
+            "model": "gpt-4o-mini",
+            "temperature": 0.1,
+            "max_tokens": 2000,
+            "api_key": "env:OPENAI_API_KEY",
+            "base_url": base_url
+        }
+    }
+    
+    default_embedder = {
+        "provider": "openai",
+        "config": {
+            "model": "text-embedding-3-small",
+            "api_key": "env:OPENAI_API_KEY",
+            "base_url": base_url
+        }
+    }
+    
+    # 如果有挂载配置，优先使用挂载配置中的 LLM 和 Embedder
+    llm_config = default_llm
+    embedder_config = default_embedder
+    
+    if mounted_config:
+        if "llm" in mounted_config and mounted_config["llm"]:
+            llm_config = mounted_config["llm"]
+            print(f"[INFO] Using LLM from mounted config: {llm_config.get('config', {}).get('model', 'unknown')}")
+        if "embedder" in mounted_config and mounted_config["embedder"]:
+            embedder_config = mounted_config["embedder"]
+            print(f"[INFO] Using Embedder from mounted config: {embedder_config.get('config', {}).get('model', 'unknown')}")
+    
     return {
         "vector_store": {
             "provider": vector_store_provider,
             "config": vector_store_config
         },
-        "llm": {
-            "provider": "openai",
-            "config": {
-                "model": "gpt-4o-mini",
-                "temperature": 0.1,
-                "max_tokens": 2000,
-                "api_key": "env:OPENAI_API_KEY"
-            }
-        },
-        "embedder": {
-            "provider": "openai",
-            "config": {
-                "model": "text-embedding-3-small",
-                "api_key": "env:OPENAI_API_KEY"
-            }
-        },
+        "llm": llm_config,
+        "embedder": embedder_config,
         "version": "v1.1"
     }
 
