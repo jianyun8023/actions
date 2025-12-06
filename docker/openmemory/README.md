@@ -21,6 +21,7 @@ OpenMemory 是个人 LLM 记忆层 - 私有、便携且开源。您的记忆存�
 
 - Docker 和 Docker Compose
 - OpenAI API Key（或兼容的 API 服务）
+- （可选）自定义模型配置文件
 
 ### 1. 下载配置文件
 
@@ -39,24 +40,44 @@ curl -O https://raw.githubusercontent.com/jianyun8023/actions/master/docker/open
 ```bash
 # 方式 1：直接创建
 cat > .env << 'EOF'
+# OpenAI 配置
 OPENAI_API_KEY=sk-your-api-key-here
 OPENAI_BASE_URL=https://api.openai.com/v1
-NEXT_PUBLIC_API_URL=http://localhost:8765
+
+# UI 配置
+NEXT_PUBLIC_API_URL=/api
+INTERNAL_API_URL=http://openmemory-api:8765
 EOF
 
 # 方式 2：导出环境变量
 export OPENAI_API_KEY=sk-your-api-key-here
 export OPENAI_BASE_URL=https://api.openai.com/v1
-export NEXT_PUBLIC_API_URL=http://localhost:8765
+export NEXT_PUBLIC_API_URL=/api
+export INTERNAL_API_URL=http://openmemory-api:8765
 ```
 
-### 3. 启动服务
+### 3. （可选）配置自定义模型
+
+如果需要使用硅基流动、Ollama 或其他模型服务：
+
+```bash
+# 复制配置模板
+cp config.json.example config.json
+
+# 编辑配置文件（参考下方"使用自定义模型"章节）
+vim config.json
+
+# 在 docker-compose.yml 中取消注释配置挂载
+# - ./config.json:/usr/src/openmemory/config.json:ro
+```
+
+### 4. 启动服务
 
 ```bash
 docker compose up -d
 ```
 
-### 4. 访问应用
+### 5. 访问应用
 
 - **Web 界面**: http://localhost:3000
 - **API 文档**: http://localhost:8765/docs
@@ -86,6 +107,21 @@ docker pull ghcr.io/jianyun8023/openmemory-ui:latest
 
 ## ⚙️ 配置说明
 
+### 架构模式
+
+```
+浏览器 → UI 服务 (Next.js) → API 服务
+         (代理转发 /api/*)
+```
+
+**优势**：
+- ✅ 更安全：API 服务不需要对外暴露
+- ✅ 无 CORS 问题
+- ✅ 统一入口，便于反向代理配置
+- ✅ 浏览器只需访问 UI 地址
+
+---
+
 ### 环境变量
 
 #### API 服务（openmemory-api）
@@ -103,15 +139,16 @@ docker pull ghcr.io/jianyun8023/openmemory-ui:latest
 
 | 变量 | 说明 | 必需 | 默认值 |
 |------|------|------|--------|
-| `NEXT_PUBLIC_API_URL` | API 服务地址 | 是 | http://localhost:8765 |
-| `NEXT_PUBLIC_USER_ID` | 用户 ID（与 API 保持一致） | 是 | admin |
+| `NEXT_PUBLIC_API_URL` | 浏览器端 API 地址（相对路径） | 是 | `/api` |
+| `INTERNAL_API_URL` | 服务端内部 API 地址 | 否 | `http://openmemory-api:8765` |
+| `NEXT_PUBLIC_USER_ID` | 用户 ID（与 API 保持一致） | 是 | `admin` |
 
 ### 端口映射
 
 | 服务 | 容器端口 | 主机端口 | 说明 |
 |------|----------|----------|------|
-| openmemory-api | 8765 | 8765 | API 服务 |
-| openmemory-ui | 3000 | 3000 | Web 界面 |
+| openmemory-api | 8765 | 8765 | API 服务（可选暴露，用于调试） |
+| openmemory-ui | 3000 | 3000 | Web 界面（对外访问入口） |
 | qdrant | 6333 | 6333 | Qdrant REST API |
 | qdrant | 6334 | 6334 | Qdrant gRPC |
 
@@ -122,30 +159,147 @@ docker pull ghcr.io/jianyun8023/openmemory-ui:latest
 | `qdrant_storage` | /qdrant/storage | Qdrant 向量数据 |
 | `api_data` | /var/lib/openmemory | SQLite 数据库 |
 
+## 🎨 使用自定义模型
+
+### 方式 1: 使用配置文件（推荐）
+
+创建 `config.json` 并在 `docker-compose.yml` 中挂载：
+
+```bash
+# 1. 复制模板
+cp config.json.example config.json
+
+# 2. 编辑配置（例如使用硅基流动 Qwen 模型）
+cat > config.json << 'EOF'
+{
+    "mem0": {
+        "llm": {
+            "provider": "openai",
+            "config": {
+                "model": "Qwen/Qwen2.5-7B-Instruct",
+                "temperature": 0.1,
+                "max_tokens": 2000,
+                "api_key": "env:SILICONFLOW_API_KEY",
+                "base_url": "https://api.siliconflow.cn/v1"
+            }
+        },
+        "embedder": {
+            "provider": "openai",
+            "config": {
+                "model": "Qwen/Qwen3-Embedding-8B",
+                "api_key": "env:SILICONFLOW_API_KEY",
+                "base_url": "https://api.siliconflow.cn/v1"
+            }
+        }
+    }
+}
+EOF
+
+# 3. 在 docker-compose.yml 中启用挂载
+# 取消注释这一行:
+# volumes:
+#   - ./config.json:/usr/src/openmemory/config.json:ro
+
+# 4. 设置环境变量
+export SILICONFLOW_API_KEY="your-api-key"
+
+# 5. 启动服务
+docker compose up -d
+```
+
+### 方式 2: 仅使用环境变量（简单场景）
+
+如果只需要更改 API Key 和 Base URL，直接在 `.env` 文件中配置：
+
+```bash
+OPENAI_API_KEY=your-api-key
+OPENAI_BASE_URL=https://api.siliconflow.cn/v1
+```
+
+**注意**: 环境变量方式只能配置 API Key 和 Base URL，不能更改模型。如需使用不同模型（如 Qwen），必须使用配置文件方式。
+
+---
+
 ## 🚀 部署场景
 
-### 场景 1：本地开发
+### 场景 1：本地开发（代理模式）
 
 ```yaml
+# docker-compose.yml - UI 服务环境变量
 environment:
-  - NEXT_PUBLIC_API_URL=http://localhost:8765
+  - NEXT_PUBLIC_API_URL=/api                    # 浏览器使用相对路径
+  - INTERNAL_API_URL=http://openmemory-api:8765 # 内部网络地址
 ```
 
-### 场景 2：局域网服务器
+访问：`http://localhost:3000`（API 通过 UI 代理访问）
+
+---
+
+### 场景 2：局域网服务器（代理模式）
 
 ```yaml
+# docker-compose.yml - UI 服务环境变量
 environment:
-  - NEXT_PUBLIC_API_URL=http://192.168.1.100:8765
+  - NEXT_PUBLIC_API_URL=/api                    # 浏览器使用相对路径
+  - INTERNAL_API_URL=http://openmemory-api:8765 # 内部网络地址
 ```
 
-### 场景 3：云服务器（域名）
+访问：`http://192.168.1.100:3000`（局域网内其他设备）
 
+---
+
+### 场景 3：云服务器（Nginx + SSL）
+
+**推荐架构**：
+```
+浏览器 → Nginx (HTTPS) → UI 服务 → API 服务
+```
+
+**Nginx 配置示例**：
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name openmemory.yourdomain.com;
+    
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+    
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+**docker-compose.yml**：
 ```yaml
 environment:
-  - NEXT_PUBLIC_API_URL=https://openmemory.yourdomain.com
+  - NEXT_PUBLIC_API_URL=/api                    # 浏览器使用相对路径
+  - INTERNAL_API_URL=http://openmemory-api:8765 # 内部网络地址
 ```
 
-**注意**: 生产环境建议配置 Nginx 反向代理和 SSL 证书。
+访问：`https://openmemory.yourdomain.com`
+
+---
+
+### 场景 4：直连模式（不推荐，仅用于调试）
+
+```yaml
+# 取消注释 API 端口映射
+openmemory-api:
+  ports:
+    - "8765:8765"
+
+# UI 环境变量
+openmemory-ui:
+  environment:
+    - NEXT_PUBLIC_API_URL=http://localhost:8765  # 浏览器直接访问 API
+```
+
+**缺点**：需要配置 CORS，API 暴露在公网，安全性较低。
 
 ## 🔌 MCP 客户端配置
 
