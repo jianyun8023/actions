@@ -97,6 +97,42 @@ actions/
 - 随机密钥生成（SNELL_PSK）
 - 默认端口 6333
 
+### 5. OpenMemory (NEW ✨)
+**位置**: `docker/openmemory/`  
+**用途**: 个人 LLM 记忆层 - 私有、便携且开源  
+**架构**: linux/amd64, linux/arm64  
+**镜像**: 
+- API: `ghcr.io/jianyun8023/openmemory-api:latest`
+- UI: `ghcr.io/jianyun8023/openmemory-ui:latest`
+
+**核心组件**:
+- **API**: Python FastAPI + mem0ai + Alembic (数据库迁移)
+- **UI**: Next.js 15 + React 19 + TypeScript + Redux
+- **数据库**: SQLite (本地) + Qdrant (向量数据库)
+
+**端口**:
+- 8765: API 服务
+- 3000: Web 界面
+- 6333: Qdrant REST API
+- 6334: Qdrant gRPC
+
+**特性**:
+- 🔒 本地存储，数据安全
+- 🐳 多架构支持（amd64, arm64）
+- 📡 支持 MCP 协议（Model Context Protocol）
+- 🎨 现代化 Web 管理界面
+- 🔌 多模型支持（OpenAI, Anthropic, Ollama, DeepSeek）
+- ⚡ FastAPI 异步架构
+- 📊 健康检查和非 root 用户运行
+
+**数据持久化**:
+- `/var/lib/openmemory`: SQLite 数据库
+- `/qdrant/storage`: 向量数据
+
+**工作流**: `.github/workflows/build-openmemory-image.yml`（双镜像构建）
+
+**部署文档**: `docker/openmemory/README.md`
+
 ## 开发模式与规范
 
 ### GitHub Actions 工作流模式
@@ -156,30 +192,45 @@ actions/
 
 ## 当前开发计划
 
-### 阶段 0: 项目清理 ✅ (进行中)
-- 删除 OpenWrt 相关内容（openwrt/ 目录）
-- 删除废弃工作流（Pulsar, DSM, 订阅转换）
-- 删除 docker/atmosphere, docker/pulsar, dsm/
-- 删除 .drone.yml, simple.ini
-- 更新 .gitignore
+### 阶段 0: 项目清理 ✅ (已完成)
+- ✅ 删除 OpenWrt 相关内容（openwrt/ 目录）
+- ✅ 删除废弃工作流（Pulsar, DSM, 订阅转换）
+- ✅ 删除 docker/atmosphere, docker/pulsar, dsm/
+- ✅ 删除 .drone.yml, simple.ini
+- ✅ 更新 .gitignore
+- **提交**: 83a7900
 
-### 阶段 1: OpenMemory 镜像构建 ⏳
-- 创建 docker/openmemory/Dockerfile
-- 编写 build-openmemory-image.yml 工作流
-- 多架构支持（amd64, arm64）
-- docker-compose.yml（OpenMemory + Qdrant）
-- 部署文档
+### 阶段 1: OpenMemory 镜像构建 ✅ (已完成 - 2025-12-06)
+- ✅ 创建 docker/openmemory/api/Dockerfile（多架构，多阶段构建）
+- ✅ 创建 docker/openmemory/ui/Dockerfile（多架构，多阶段构建）
+- ✅ 编写 build-openmemory-image.yml 工作流（双镜像并行构建）
+- ✅ 多架构支持（linux/amd64, linux/arm64）
+- ✅ docker-compose.yml（OpenMemory API + UI + Qdrant）
+- ✅ 创建详细部署文档（docker/openmemory/README.md）
+- ✅ 添加 .dockerignore 优化构建上下文
+- ✅ 添加 HEALTHCHECK 指令
+- ✅ 非 root 用户运行
+- ✅ 快速启动脚本（start.sh）
+- ✅ 环境变量示例（env.example）
+- **提交**: 2fed5e4
+- **镜像**:
+  - ghcr.io/jianyun8023/openmemory-api:latest
+  - ghcr.io/jianyun8023/openmemory-ui:latest
 
-### 阶段 2: 文档更新 ⏳
-- 更新 README.md（移除 OpenWrt）
+### 阶段 2: 文档更新 ⏳ (下一步)
+- 更新 README.md（移除 OpenWrt，添加 OpenMemory）
 - 添加 OpenMemory 使用说明
 - 完善各镜像文档
+- 添加部署示例和故障排查指南
 
-### 阶段 3: 构建标准化 ⏳
-- 统一 Dockerfile 最佳实践
-- 标准化多阶段构建
-- 添加 HEALTHCHECK
-- 创建 .dockerignore
+### 阶段 3: 构建标准化 ⏳ (规划中)
+- 审查现有 Dockerfile（iNode, EasyConnect, Book Helper, Snell）
+- 统一 Dockerfile 最佳实践（参考 OpenMemory）
+- 标准化多阶段构建模式
+- 为所有镜像添加 HEALTHCHECK
+- 为 book-helper 和 snell 创建工作流
+- 优化 EasyConnect 工作流（使用 build-push-action@v6）
+- 创建 .dockerignore 模板
 
 ## 技术债务与改进点
 
