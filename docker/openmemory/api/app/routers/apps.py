@@ -37,7 +37,7 @@ def get_app_with_permission(db: Session, app_id: UUID, user_id: str) -> App:
 # List all apps with filtering
 @router.get("/")
 async def list_apps(
-    user_id: str = Query(..., description="User ID to filter apps"),
+    user_id: Optional[str] = Query(None, description="User ID to filter apps (optional for backward compatibility)"),
     name: Optional[str] = None,
     is_active: Optional[bool] = None,
     sort_by: str = 'name',
@@ -46,8 +46,10 @@ async def list_apps(
     page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
-    # Verify user exists
-    user = get_user_or_404(db, user_id)
+    # If user_id provided, verify and filter by user
+    user = None
+    if user_id:
+        user = get_user_or_404(db, user_id)
 
     # Create a subquery for memory counts
     memory_counts = db.query(
@@ -63,12 +65,16 @@ async def list_apps(
         func.count(func.distinct(MemoryAccessLog.memory_id)).label('access_count')
     ).group_by(MemoryAccessLog.app_id).subquery()
 
-    # Base query - filter by user's apps only
+    # Base query
     query = db.query(
         App,
         func.coalesce(memory_counts.c.memory_count, 0).label('total_memories_created'),
         func.coalesce(access_counts.c.access_count, 0).label('total_memories_accessed')
-    ).filter(App.owner_id == user.id)
+    )
+    
+    # Filter by user's apps if user_id provided
+    if user:
+        query = query.filter(App.owner_id == user.id)
 
     # Join with subqueries
     query = query.outerjoin(

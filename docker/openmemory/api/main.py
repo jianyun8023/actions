@@ -1,5 +1,7 @@
 import datetime
+import logging
 import os
+import sys
 from uuid import uuid4
 
 from app.config import DEFAULT_APP_ID, USER_ID
@@ -13,6 +15,34 @@ from fastapi.responses import JSONResponse
 from fastapi_pagination import add_pagination
 from sqlalchemy import text
 from starlette.middleware.base import BaseHTTPMiddleware
+
+# ============================================
+# Logging Configuration
+# ============================================
+# Log level can be controlled via LOG_LEVEL environment variable
+# Supported values: DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+
+# Configure root logger
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+# Set specific logger levels
+logger = logging.getLogger(__name__)
+logger.info(f"Logging initialized with level: {LOG_LEVEL}")
+
+# Reduce noise from third-party libraries (unless DEBUG is enabled)
+if LOG_LEVEL != "DEBUG":
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("asyncio").setLevel(logging.WARNING)
 
 app = FastAPI(
     title="OpenMemory API"
