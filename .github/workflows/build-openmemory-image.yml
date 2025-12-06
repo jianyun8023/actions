@@ -3,31 +3,16 @@ name: Build OpenMemory Docker Images
 on: workflow_dispatch
 
 env:
-  # API 镜像配置
   API_IMAGE_NAME: openmemory-api
-  API_VERSION: "latest"
-  # UI 镜像配置
   UI_IMAGE_NAME: openmemory-ui
-  UI_VERSION: "latest"
-  # 官方仓库
-  OPENMEMORY_REPO: "https://github.com/mem0ai/mem0.git"
-  OPENMEMORY_PATH: "openmemory"
 
 jobs:
   build-api:
     name: Build API Image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Actions Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Clone OpenMemory Official Repository
-        run: |
-          git clone --depth 1 ${{ env.OPENMEMORY_REPO }} /tmp/mem0
-          cp -r /tmp/mem0/${{ env.OPENMEMORY_PATH }}/api /tmp/openmemory-api
-          # 使用我们优化的 Dockerfile 和修复的 database.py
-          cp docker/openmemory/api/Dockerfile /tmp/openmemory-api/Dockerfile
-          cp docker/openmemory/api/database_fixed.py /tmp/openmemory-api/database_fixed.py
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -45,15 +30,13 @@ jobs:
       - name: Build and Push API Image
         uses: docker/build-push-action@v6
         with:
-          context: /tmp/openmemory-api
+          context: docker/openmemory/api
           platforms: linux/amd64,linux/arm64
           labels: |
-            runnumber=${{ github.run_id }}
-            org.opencontainers.image.source=${{ env.OPENMEMORY_REPO }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ env.API_IMAGE_NAME }}:${{ env.API_VERSION }}
             ghcr.io/${{ github.repository_owner }}/${{ env.API_IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -62,15 +45,8 @@ jobs:
     name: Build UI Image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Actions Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Clone OpenMemory Official Repository
-        run: |
-          git clone --depth 1 ${{ env.OPENMEMORY_REPO }} /tmp/mem0
-          cp -r /tmp/mem0/${{ env.OPENMEMORY_PATH }}/ui /tmp/openmemory-ui
-          # 使用我们优化的 Dockerfile
-          cp docker/openmemory/ui/Dockerfile /tmp/openmemory-ui/Dockerfile
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -88,16 +64,13 @@ jobs:
       - name: Build and Push UI Image
         uses: docker/build-push-action@v6
         with:
-          context: /tmp/openmemory-ui
+          context: docker/openmemory/ui
           platforms: linux/amd64,linux/arm64
           labels: |
-            runnumber=${{ github.run_id }}
-            org.opencontainers.image.source=${{ env.OPENMEMORY_REPO }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ env.UI_IMAGE_NAME }}:${{ env.UI_VERSION }}
             ghcr.io/${{ github.repository_owner }}/${{ env.UI_IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-

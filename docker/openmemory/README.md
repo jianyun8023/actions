@@ -222,38 +222,19 @@ OPENAI_BASE_URL=https://api.siliconflow.cn/v1
 
 ## 🚀 部署场景
 
-### 场景 1：本地开发（代理模式）
+### 场景 1：本地开发
 
-```yaml
-# docker-compose.yml - UI 服务环境变量
-environment:
-  - NEXT_PUBLIC_API_URL=/api                    # 浏览器使用相对路径
-  - INTERNAL_API_URL=http://openmemory-api:8765 # 内部网络地址
-```
-
-访问：`http://localhost:3000`（API 通过 UI 代理访问）
+访问：`http://localhost:3000`
 
 ---
 
-### 场景 2：局域网服务器（代理模式）
-
-```yaml
-# docker-compose.yml - UI 服务环境变量
-environment:
-  - NEXT_PUBLIC_API_URL=/api                    # 浏览器使用相对路径
-  - INTERNAL_API_URL=http://openmemory-api:8765 # 内部网络地址
-```
+### 场景 2：局域网服务器
 
 访问：`http://192.168.1.100:3000`（局域网内其他设备）
 
 ---
 
 ### 场景 3：云服务器（Nginx + SSL）
-
-**推荐架构**：
-```
-浏览器 → Nginx (HTTPS) → UI 服务 → API 服务
-```
 
 **Nginx 配置示例**：
 ```nginx
@@ -274,32 +255,7 @@ server {
 }
 ```
 
-**docker-compose.yml**：
-```yaml
-environment:
-  - NEXT_PUBLIC_API_URL=/api                    # 浏览器使用相对路径
-  - INTERNAL_API_URL=http://openmemory-api:8765 # 内部网络地址
-```
-
 访问：`https://openmemory.yourdomain.com`
-
----
-
-### 场景 4：直连模式（不推荐，仅用于调试）
-
-```yaml
-# 取消注释 API 端口映射
-openmemory-api:
-  ports:
-    - "8765:8765"
-
-# UI 环境变量
-openmemory-ui:
-  environment:
-    - NEXT_PUBLIC_API_URL=http://localhost:8765  # 浏览器直接访问 API
-```
-
-**缺点**：需要配置 CORS，API 暴露在公网，安全性较低。
 
 ## 🔌 MCP 客户端配置
 
