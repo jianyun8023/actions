@@ -15,10 +15,14 @@ Key features:
 - Environment variable parsing for API keys
 """
 
+import asyncio
+import concurrent.futures
 import contextvars
 import datetime
 import json
 import logging
+import os
+import time
 import uuid
 
 from app.database import SessionLocal
@@ -57,6 +61,22 @@ mcp_router = APIRouter(prefix="/mcp")
 # Initialize SSE transport
 sse = SseServerTransport("/mcp/messages/")
 
+# Timeout for memory operations (in seconds)
+MEMORY_OPERATION_TIMEOUT = int(os.environ.get("MEMORY_OPERATION_TIMEOUT", "120"))
+
+
+def _add_memory_sync(memory_client, text: str, uid: str, client_name: str):
+    """Synchronous wrapper for memory_client.add() to run in thread pool."""
+    return memory_client.add(
+        text,
+        user_id=uid,
+        metadata={
+            "source_app": "openmemory",
+            "mcp_client": client_name,
+        }
+    )
+
+
 @mcp.tool(description="Add a new memory. This method is called everytime the user informs anything about themselves, their preferences, or anything that has any relevant information which can be useful in the future conversation. This can also be called when the user asks you to remember something.")
 async def add_memories(text: str) -> str:
     uid = user_id_var.get(None)
@@ -67,10 +87,15 @@ async def add_memories(text: str) -> str:
     if not client_name:
         return "Error: client_name not provided"
 
+    start_time = time.time()
+    logging.info(f"[MCP] add_memories started for user={uid}, client={client_name}, text_length={len(text)}")
+
     # Get memory client safely
+    logging.info("[MCP] Getting memory client...")
     memory_client = get_memory_client_safe()
     if not memory_client:
         return "Error: Memory system is currently unavailable. Please try again later."
+    logging.info(f"[MCP] Memory client ready (elapsed: {time.time() - start_time:.2f}s)")
 
     try:
         db = SessionLocal()
@@ -82,12 +107,28 @@ async def add_memories(text: str) -> str:
             if not app.is_active:
                 return f"Error: App {app.name} is currently paused on OpenMemory. Cannot create new memories."
 
-            response = memory_client.add(text,
-                                         user_id=uid,
-                                         metadata={
-                                            "source_app": "openmemory",
-                                            "mcp_client": client_name,
-                                        })
+            # Run memory_client.add() with timeout using thread pool
+            logging.info(f"[MCP] Calling memory_client.add() with timeout={MEMORY_OPERATION_TIMEOUT}s...")
+            loop = asyncio.get_event_loop()
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                try:
+                    response = await asyncio.wait_for(
+                        loop.run_in_executor(
+                            executor,
+                            _add_memory_sync,
+                            memory_client,
+                            text,
+                            uid,
+                            client_name
+                        ),
+                        timeout=MEMORY_OPERATION_TIMEOUT
+                    )
+                except asyncio.TimeoutError:
+                    elapsed = time.time() - start_time
+                    logging.error(f"[MCP] memory_client.add() timed out after {elapsed:.2f}s")
+                    return f"Error: Memory operation timed out after {MEMORY_OPERATION_TIMEOUT}s. The LLM or vector store may be slow or unavailable."
+            
+            logging.info(f"[MCP] memory_client.add() completed (elapsed: {time.time() - start_time:.2f}s)")
 
             # Process the response and update database
             if isinstance(response, dict) and 'results' in response:
