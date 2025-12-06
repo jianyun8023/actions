@@ -36,11 +36,13 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY . .
 
-# Use dev config and create .env with placeholder values
-# 这些占位符会在运行时被 entrypoint.sh 替换为实际环境变量值
+# Use dev config and create .env with default/placeholder values
+# NEXT_PUBLIC_* 占位符会在运行时被 entrypoint.sh 替换为实际环境变量值
+# INTERNAL_API_URL 使用默认值，可在运行时通过环境变量覆盖
 RUN cp next.config.dev.mjs next.config.mjs && \
     echo "NEXT_PUBLIC_API_URL=NEXT_PUBLIC_API_URL" > .env && \
     echo "NEXT_PUBLIC_USER_ID=NEXT_PUBLIC_USER_ID" >> .env && \
+    echo "INTERNAL_API_URL=http://openmemory-api:8765" >> .env && \
     pnpm build
 
 # Runtime stage

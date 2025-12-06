@@ -14,23 +14,26 @@ LABEL maintainer="jianyun8023" \
 
 WORKDIR /usr/src/openmemory
 
-# Builder stage - Clone and build
+# Builder stage - Build from local source
 FROM base AS builder
 
-# Install build dependencies and git
+# Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone official OpenMemory source
-RUN git clone --depth 1 https://github.com/mem0ai/mem0.git /tmp/mem0 && \
-    cp -r /tmp/mem0/openmemory/api/* /usr/src/openmemory/ && \
-    rm -rf /tmp/mem0
+# Copy local source code
+COPY requirements.txt /usr/src/openmemory/
+COPY main.py /usr/src/openmemory/
+COPY default_config.json /usr/src/openmemory/
+COPY config.json /usr/src/openmemory/
+COPY alembic.ini /usr/src/openmemory/
+COPY alembic /usr/src/openmemory/alembic
+COPY app /usr/src/openmemory/app
 
-# Install Python dependencies first
-RUN pip install --no-cache-dir --user -r requirements.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir --user -r /usr/src/openmemory/requirements.txt
 
 # Runtime stage
 FROM base AS runtime
@@ -51,9 +54,6 @@ RUN chown -R openmemory:openmemory /usr/src/openmemory
 # Create data directories
 RUN mkdir -p /var/lib/openmemory && \
     chown -R openmemory:openmemory /var/lib/openmemory
-
-# Copy fixed database.py (PostgreSQL support) - 在切换用户前复制
-COPY --chown=openmemory:openmemory database_fixed.py /usr/src/openmemory/app/database.py
 
 # Switch to non-root user
 USER openmemory

@@ -6,7 +6,6 @@
 # Documentation
 README.md
 *.md
-!database_fixed.py
 
 # Python
 __pycache__
