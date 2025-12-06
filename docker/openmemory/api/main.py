@@ -18,9 +18,10 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,  # 使用 * 时不能启用 credentials
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],  # 允许前端访问响应头
 )
 
 # Create all tables
