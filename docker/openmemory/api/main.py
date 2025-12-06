@@ -14,8 +14,8 @@ from fastapi_pagination import add_pagination
 from sqlalchemy import text
 
 app = FastAPI(
-    title="OpenMemory API",
-    redirect_slashes=False  # 禁用自动尾部斜杠重定向
+    title="OpenMemory API"
+    # redirect_slashes=True (默认) - 自动将 /path 重定向到 /path/
 )
 
 

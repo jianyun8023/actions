@@ -160,13 +160,13 @@ def save_config_to_db(db: Session, config: Dict[str, Any], key: str = "main"):
     db.refresh(db_config)
     return db_config.value
 
-@router.get("", response_model=ConfigSchema)
+@router.get("/", response_model=ConfigSchema)
 async def get_configuration(db: Session = Depends(get_db)):
     """Get the current configuration."""
     config = get_config_from_db(db)
     return config
 
-@router.put("", response_model=ConfigSchema)
+@router.put("/", response_model=ConfigSchema)
 async def update_configuration(config: ConfigSchema, db: Session = Depends(get_db)):
     """Update the configuration."""
     current_config = get_config_from_db(db)
@@ -192,7 +192,7 @@ async def update_configuration(config: ConfigSchema, db: Session = Depends(get_d
     reset_memory_client()
     return updated_config
 
-@router.patch("", response_model=ConfigSchema)
+@router.patch("/", response_model=ConfigSchema)
 async def patch_configuration(config_update: ConfigSchema, db: Session = Depends(get_db)):
     """Update parts of the configuration."""
     current_config = get_config_from_db(db)

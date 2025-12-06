@@ -22,7 +22,7 @@ from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate as sqlalchemy_paginate
 from pydantic import BaseModel
 from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 router = APIRouter(prefix="/api/v1/memories", tags=["memories"])
 
@@ -158,11 +158,11 @@ async def list_memories(
         if sort_field:
             query = query.order_by(sort_field.desc()) if sort_direction == "desc" else query.order_by(sort_field.asc())
 
-    # Add eager loading for app and categories
+    # Add eager loading for app and categories (使用 selectinload 避免重复行)
     query = query.options(
-        joinedload(Memory.app),
-        joinedload(Memory.categories)
-    ).distinct(Memory.id)
+        selectinload(Memory.app),
+        selectinload(Memory.categories)
+    )
 
     # Get paginated results with transformer
     return sqlalchemy_paginate(
@@ -218,7 +218,7 @@ class CreateMemoryRequest(BaseModel):
 
 
 # Create new memory
-@router.post("")
+@router.post("/")
 async def create_memory(
     request: CreateMemoryRequest,
     db: Session = Depends(get_db)
@@ -352,7 +352,7 @@ class DeleteMemoriesRequest(BaseModel):
     user_id: str
 
 # Delete multiple memories
-@router.delete("")
+@router.delete("/")
 async def delete_memories(
     request: DeleteMemoriesRequest,
     db: Session = Depends(get_db)
@@ -611,10 +611,10 @@ async def filter_memories(
         # Default sorting
         query = query.order_by(Memory.created_at.desc())
 
-    # Add eager loading for categories and make the query distinct
+    # Add eager loading for categories using selectinload (避免重复行，兼容 PostgreSQL)
     query = query.options(
-        joinedload(Memory.categories)
-    ).distinct(Memory.id)
+        selectinload(Memory.categories)
+    )
 
     # Use fastapi-pagination's paginate function
     return sqlalchemy_paginate(
@@ -657,20 +657,20 @@ async def get_related_memories(
     if not category_ids:
         return Page.create([], total=0, params=params)
     
-    # Build query for related memories
-    query = db.query(Memory).distinct(Memory.id).filter(
+    # Build query for related memories (使用 group_by 替代 distinct，兼容 PostgreSQL)
+    query = db.query(Memory).filter(
         Memory.user_id == user.id,
         Memory.id != memory_id,
         Memory.state != MemoryState.deleted
     ).join(Memory.categories).filter(
         Category.id.in_(category_ids)
-    ).options(
-        joinedload(Memory.categories),
-        joinedload(Memory.app)
-    ).order_by(
+    ).group_by(Memory.id).order_by(
         func.count(Category.id).desc(),
         Memory.created_at.desc()
-    ).group_by(Memory.id)
+    ).options(
+        selectinload(Memory.categories),
+        selectinload(Memory.app)
+    )
     
     # ⚡ Force page size to be 5
     params = Params(page=params.page, size=5)
