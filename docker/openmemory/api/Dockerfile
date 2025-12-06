@@ -42,9 +42,6 @@ RUN useradd -m -u 1001 -s /bin/bash openmemory
 COPY --from=builder /root/.local /home/openmemory/.local
 COPY --from=builder /usr/src/openmemory /usr/src/openmemory
 
-# Copy fixed database.py (PostgreSQL support) - 在 runtime stage 执行
-COPY --chown=openmemory:openmemory database_fixed.py /usr/src/openmemory/app/database.py
-
 # Set PATH for user-installed packages
 ENV PATH=/home/openmemory/.local/bin:$PATH
 
@@ -54,6 +51,9 @@ RUN chown -R openmemory:openmemory /usr/src/openmemory
 # Create data directories
 RUN mkdir -p /var/lib/openmemory && \
     chown -R openmemory:openmemory /var/lib/openmemory
+
+# Copy fixed database.py (PostgreSQL support) - 在切换用户前复制
+COPY --chown=openmemory:openmemory database_fixed.py /usr/src/openmemory/app/database.py
 
 # Switch to non-root user
 USER openmemory
