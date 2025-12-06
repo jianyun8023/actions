@@ -7,16 +7,38 @@ from app.database import Base, SessionLocal, engine
 from app.mcp_server import setup_mcp_server
 from app.models import App, User
 from app.routers import apps_router, backup_router, config_router, memories_router, stats_router
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi_pagination import add_pagination
 from sqlalchemy import text
+from starlette.middleware.base import BaseHTTPMiddleware
 
 app = FastAPI(
     title="OpenMemory API"
     # redirect_slashes=True (默认) - 自动将 /path 重定向到 /path/
 )
+
+
+# ============================================
+# Proxy Headers Middleware - 修复 HTTPS 重定向
+# ============================================
+class ProxyHeadersMiddleware(BaseHTTPMiddleware):
+    """
+    信任代理头 X-Forwarded-Proto，确保重定向使用正确的协议（HTTPS）
+    """
+    async def dispatch(self, request: Request, call_next):
+        # 从代理头获取原始协议
+        forwarded_proto = request.headers.get("x-forwarded-proto")
+        if forwarded_proto:
+            # 修改 scope 中的 scheme
+            request.scope["scheme"] = forwarded_proto
+        
+        response = await call_next(request)
+        return response
+
+# 添加代理头中间件（在最外层）
+app.add_middleware(ProxyHeadersMiddleware)
 
 
 # ============================================
