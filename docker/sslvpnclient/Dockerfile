@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     dante-server \
     busybox \
     procps \
-    jq \
+    expect \
     --no-install-recommends && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
