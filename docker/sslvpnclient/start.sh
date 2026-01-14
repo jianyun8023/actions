@@ -44,11 +44,11 @@ update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy 2>/dev/null || tr
     fi
 done) &
 
-# 启动 Web 管理界面
-echo "[$(date)] Starting Web UI on port 8080..."
+# 启动 Web 终端
+echo "[$(date)] Starting Web Terminal on port 8080..."
 /opt/webui.sh &
 
-echo "[$(date)] Container ready. Use Web UI at http://localhost:8080"
+echo "[$(date)] Container ready. Use Web Terminal at http://localhost:8080"
 echo "[$(date)] SOCKS5 proxy will be available at port 1080 after VPN connection"
 
 # 保持容器运行

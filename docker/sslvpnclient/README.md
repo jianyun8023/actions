@@ -1,12 +1,12 @@
 # SSL VPN Client Docker
 
-将 SSL VPN 客户端封装在 Docker 容器中，通过 SOCKS5 代理访问内网资源，并提供 Web 管理界面。
+将 SSL VPN 客户端封装在 Docker 容器中，通过 SOCKS5 代理访问内网资源，并提供一个**极简 Web 终端**，方便你在浏览器里直接执行命令。
 
 ## 功能特性
 
 - 🔐 SSL VPN 客户端容器化
 - 🌐 SOCKS5 代理 (端口 1080)
-- 🖥️ Web 管理界面 (端口 8080)
+- 🖥️ Web 终端 (端口 8080)
 - 📁 配置持久化
 - 🔄 自动重连支持
 
@@ -43,14 +43,22 @@ docker run -d \
 
 ## 使用方式
 
-### Web 管理界面
+### Web 终端（推荐）
 
-访问 `http://localhost:8080` 进行 VPN 管理：
+访问 `http://localhost:8080` 打开 Web 终端，在浏览器里直接执行容器内命令，例如：
 
-- 查看连接状态
-- 快速连接（使用保存的配置）
-- 断开连接
-- 查看 SOCKS5 代理状态
+```bash
+cd /opt/sslvpnclient
+./secgateaccess showinfo
+./secgateaccess quickconnect
+./secgateaccess disconnect
+```
+
+可选：启用 BasicAuth（避免端口暴露后被随意访问）：
+
+```bash
+WEB_TERMINAL_CREDENTIALS=user:pass
+```
 
 ### SOCKS5 代理
 

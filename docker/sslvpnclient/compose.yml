@@ -7,14 +7,14 @@ services:
     # build:
     #   context: .
     #   dockerfile: Dockerfile
-    container_name: sslvpn
+    container_name: sslvpnclient
     cap_add:
       - NET_ADMIN              # 网络管理权限
     devices:
       - /dev/net/tun           # TUN 设备
     ports:
       - "1080:1080"            # SOCKS5 代理
-      - "8080:8080"            # Web 管理界面
+      - "8080:8080"            # Web 终端（浏览器里执行命令）
     volumes:
       - ./conf:/opt/sslvpnclient/conf   # 配置持久化
     restart: unless-stopped
