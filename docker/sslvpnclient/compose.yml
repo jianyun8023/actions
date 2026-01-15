@@ -3,6 +3,7 @@ version: '3.9'
 services:
   sslvpn:
     image: ghcr.io/jianyun8023/sslvpnclient:latest
+    platform: linux/amd64
     # 本地构建时取消注释
     # build:
     #   context: .

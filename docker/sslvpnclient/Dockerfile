@@ -1,9 +1,15 @@
 # SSL VPN Client Docker 镜像
 FROM debian:12-slim
 
-ARG TARGETARCH
-
 ENV DEBIAN_FRONTEND=noninteractive
+
+# 说明：当前 SSLVPN 客户端（secgateaccess）安装包仅提供 amd64
+RUN set -eux; \
+    arch="$(dpkg --print-architecture)"; \
+    if [ "${arch}" != "amd64" ]; then \
+      echo "ERROR: docker/sslvpnclient 仅支持 linux/amd64（当前架构: ${arch}）。" >&2; \
+      exit 1; \
+    fi
 
 # 安装基础依赖
 RUN apt-get update && apt-get install -y \
@@ -16,25 +22,24 @@ RUN apt-get update && apt-get install -y \
     busybox \
     procps \
     expect \
+    bash \
     --no-install-recommends && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 安装 Web 终端（ttyd，按架构下载预编译二进制）
+# 安装 Web 终端（ttyd，下载预编译二进制）
 # 资源命名：ttyd.x86_64 / ttyd.aarch64
 RUN set -eux; \
-    case "${TARGETARCH}" in \
-      amd64) ttyd_arch="x86_64" ;; \
-      arm64) ttyd_arch="aarch64" ;; \
-      *) echo "Unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
-    esac; \
+    ttyd_arch="x86_64"; \
     curl -fsSL -o /usr/local/bin/ttyd "https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.${ttyd_arch}"; \
     chmod +x /usr/local/bin/ttyd; \
     /usr/local/bin/ttyd -v
 
 # 安装 SSL VPN 客户端
 COPY deb/Ubuntu_SSLVPNClient_Setup.deb /tmp/sslvpnclient.deb
-RUN dpkg -i /tmp/sslvpnclient.deb || apt-get install -f -y && \
-    rm /tmp/sslvpnclient.deb
+RUN apt-get update && \
+    apt-get install -y /tmp/sslvpnclient.deb --no-install-recommends && \
+    rm /tmp/sslvpnclient.deb && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 复制配置文件
 COPY danted.conf.sample /etc/danted.conf.sample
