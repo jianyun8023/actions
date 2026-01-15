@@ -3,6 +3,58 @@ set -e
 
 echo "=== SSL VPN Client Container Starting ==="
 
+# 默认启动后自动 quickconnect（VPN 建链后才会创建 tun0，SOCKS5 才能起来）
+# 可通过 AUTO_QUICKCONNECT=0 禁用（例如只想手动在 Web 终端里操作）
+AUTO_QUICKCONNECT="${AUTO_QUICKCONNECT:-1}"
+QUICKCONNECT_RETRY_INTERVAL="${QUICKCONNECT_RETRY_INTERVAL:-10}"
+
+# 尽早尝试建立 VPN 连接（后台重试）
+if [ "${AUTO_QUICKCONNECT}" != "0" ]; then
+    (
+        cd /opt/sslvpnclient 2>/dev/null || true
+
+        # 兼容不同安装路径：优先从 PATH 查找，其次尝试常见路径
+        VPN_CMD="${VPN_CMD:-}"
+        if [ -z "${VPN_CMD}" ]; then
+            VPN_CMD="$(command -v secgateaccess 2>/dev/null || true)"
+        fi
+        if [ -z "${VPN_CMD}" ]; then
+            for p in \
+                "/opt/sslvpnclient/secgateaccess" \
+                "/opt/SSLVPNClient/secgateaccess" \
+                "/usr/local/sslvpnclient/secgateaccess" \
+                "/usr/local/bin/secgateaccess" \
+                "/usr/bin/secgateaccess" \
+                "/usr/sbin/secgateaccess"; do
+                if [ -x "${p}" ]; then
+                    VPN_CMD="${p}"
+                    break
+                fi
+            done
+        fi
+
+        echo "[$(date)] Auto quickconnect enabled (retry interval: ${QUICKCONNECT_RETRY_INTERVAL}s)"
+        while true; do
+            # 已连接则退出循环（避免刷日志）
+            if [ -n "${VPN_CMD}" ] && [ -x "${VPN_CMD}" ] && "${VPN_CMD}" showinfo 2>/dev/null | grep -q "Login User:"; then
+                echo "[$(date)] VPN already connected"
+                exit 0
+            fi
+
+            if [ -z "${VPN_CMD}" ] || [ ! -x "${VPN_CMD}" ]; then
+                echo "[$(date)] secgateaccess not found (VPN_CMD='${VPN_CMD:-}')"
+            else
+                echo "[$(date)] Running: ${VPN_CMD} quickconnect"
+                "${VPN_CMD}" quickconnect 2>&1 || true
+            fi
+
+            sleep "${QUICKCONNECT_RETRY_INTERVAL}"
+        done
+    ) &
+else
+    echo "[$(date)] Auto quickconnect disabled (AUTO_QUICKCONNECT=0)"
+fi
+
 # 配置 danted SOCKS5 代理
 cp /etc/danted.conf.sample /run/danted.conf
 

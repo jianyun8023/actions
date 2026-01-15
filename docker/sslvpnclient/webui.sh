@@ -18,6 +18,8 @@ ARGS=(
   --port "${PORT}"
   --writable
   --cwd "${CWD}"
+  # 某些浏览器/环境 WebGL 会导致空白灰屏，强制使用 canvas 渲染更稳
+  --client-option rendererType=canvas
 )
 
 if [ -n "${WEB_TERMINAL_CREDENTIALS:-}" ]; then

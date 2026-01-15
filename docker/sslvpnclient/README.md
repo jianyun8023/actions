@@ -54,6 +54,20 @@ cd /opt/sslvpnclient
 ./secgateaccess disconnect
 ```
 
+默认容器启动会自动执行 `secgateaccess quickconnect`（并后台重试），确保 VPN 尽快建链、创建 `tun0`，随后 SOCKS5 代理（1080）才会自动可用。
+
+如需禁用自动连接（只想手动连），可以设置：
+
+```bash
+AUTO_QUICKCONNECT=0
+```
+
+可选：调整重试间隔（秒）：
+
+```bash
+QUICKCONNECT_RETRY_INTERVAL=10
+```
+
 可选：启用 BasicAuth（避免端口暴露后被随意访问）：
 
 ```bash
@@ -92,7 +106,16 @@ cd /opt/sslvpnclient
 | 端口 | 用途 |
 |------|------|
 | 1080 | SOCKS5 代理 |
-| 8080 | Web 管理界面 |
+| 8080 | Web 终端（ttyd） |
+
+## 架构说明（重要）
+
+当前 `deb/Ubuntu_SSLVPNClient_Setup.deb` 为 **amd64** 安装包，因此镜像仅支持 **linux/amd64**。
+如果你在 Apple Silicon（arm64）上运行，请在 `docker-compose.yml` 中指定：
+
+```yaml
+platform: linux/amd64
+```
 
 ## 数据持久化
 
@@ -118,3 +141,16 @@ cd /opt/sslvpnclient
 ### Web 界面无法访问
 - 确认端口映射正确
 - 检查 8080 端口是否被占用
+
+### Web 终端灰屏 / 不能输入
+- 先确认 WebSocket 是否可用（直接访问端口或你的反代需要支持 WebSocket 升级）
+- 用命令验证（返回 `101 Switching Protocols` 说明 WebSocket OK）：
+
+```bash
+curl -sv --http1.1 \
+  -H 'Connection: Upgrade' \
+  -H 'Upgrade: websocket' \
+  -H 'Sec-WebSocket-Version: 13' \
+  -H 'Sec-WebSocket-Key: SGVsbG8sIHdvcmxkIQ==' \
+  http://<你的地址>:8080/ws
+```
