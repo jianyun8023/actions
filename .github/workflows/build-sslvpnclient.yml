@@ -1,10 +1,21 @@
 name: Build SSL VPN Client Docker Image
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version"
+        required: true
+        default: "1.1.2.65051"
+  push:
+    paths:
+      - 'docker/sslvpnclient/**'
+    branches:
+      - main
 
 env:
   IMAGE_NAME: sslvpnclient
-  VERSION: "1.1.2.65051"
+  VERSION: ${{ inputs.version }}
 
 jobs:
   build:

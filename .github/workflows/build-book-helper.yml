@@ -1,8 +1,19 @@
 name: Build Book-Helper Images
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version"
+        required: true
+        default: "0.0.1"
+  push:
+    paths:
+      - 'docker/book-helper/**'
+    branches:
+      - main
 env:
   IMAGE_NAME: book-helper
-  VERSION: 0.0.1
+  VERSION: ${{ inputs.version }}
 jobs:
   docker:
     runs-on: ubuntu-latest
