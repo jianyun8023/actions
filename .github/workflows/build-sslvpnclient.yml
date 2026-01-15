@@ -15,7 +15,7 @@ on:
 
 env:
   IMAGE_NAME: sslvpnclient
-  VERSION: ${{ inputs.version }}
+  VERSION: ${{ inputs.version || '1.1.2.65051' }}
 
 jobs:
   build:

@@ -15,7 +15,7 @@ on:
 
 env:
   IMAGE_NAME: docker-inode
-  VERSION: ${{ inputs.version }}
+  VERSION: ${{ inputs.version || '7.3-e0626' }}
 
 jobs:
   build:

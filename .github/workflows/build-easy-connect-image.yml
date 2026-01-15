@@ -16,7 +16,7 @@ on:
 env:
   IMAGE_NAME: docker-easyconnect
   EC_URL: "http://download.sangfor.com.cn/download/product/sslvpn/pkg/linux_767/EasyConnect_x64_7_6_7_3.deb"
-  VERSION: ${{ inputs.version }}
+  VERSION: ${{ inputs.version || '7.6.7' }}
 
 jobs:
   build:
