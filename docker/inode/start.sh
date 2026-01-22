@@ -79,8 +79,10 @@ sleep 2  # 等待 fluxbox 启动
 echo "Starting iNodeClient..."
 /etc/init.d/iNodeAuthService restart
 
-echo "Architecture: $ARCH"
-case "$ARCH" in
+# 自动检测架构
+DETECTED_ARCH=$(dpkg --print-architecture)
+echo "Architecture: $DETECTED_ARCH"
+case "$DETECTED_ARCH" in
   arm64)
     /opt/apps/com.client.inode.arm/files/.iNode/iNodeClient
     ;;
@@ -88,6 +90,6 @@ case "$ARCH" in
     /opt/apps/com.client.inode.amd/files/.iNode/iNodeClient
     ;;
   *)
-    echo "unknown architecture: $ARCH"
+    echo "unknown architecture: $DETECTED_ARCH"
     ;;
 esac

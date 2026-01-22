@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y \
     iptables \
     wget \
     curl \
+    procps \
     libgtk2.0-0 libgdk-pixbuf-2.0-0 libjpeg62-turbo \
     libglib2.0-dev \
     xclip \
@@ -40,8 +41,10 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 安装 KasmVNC
-RUN wget https://github.com/kasmtech/KasmVNC/releases/download/v${KASMVNC_VERSION}/kasmvncserver_bookworm_${KASMVNC_VERSION}_${TARGETARCH}.deb -O /tmp/kasmvnc.deb \
+# 安装 KasmVNC (自动检测架构)
+RUN ARCH=$(dpkg --print-architecture) && \
+    echo "Detected architecture: $ARCH" && \
+    wget https://github.com/kasmtech/KasmVNC/releases/download/v${KASMVNC_VERSION}/kasmvncserver_bookworm_${KASMVNC_VERSION}_${ARCH}.deb -O /tmp/kasmvnc.deb \
     && apt-get update \
     && dpkg -i /tmp/kasmvnc.deb || apt-get install -y -f \
     && rm -f /tmp/kasmvnc.deb \
@@ -51,6 +54,9 @@ RUN wget https://github.com/kasmtech/KasmVNC/releases/download/v${KASMVNC_VERSIO
 COPY ./deb/inode.${TARGETARCH}_E0626.deb /tmp/inode.deb
 RUN apt-get update && apt-get install -y /tmp/inode.deb && rm /tmp/inode.deb \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# 创建必要的目录
+RUN mkdir -p /var/lock/subsys
 
 # 复制配置文件
 COPY danted.conf.sample /etc/danted.conf.sample
