@@ -371,11 +371,31 @@
         async function callApi(action) {
             try {
                 const response = await fetch(`/cgi-bin/api.cgi?action=${action}`);
+                
+                // 处理 HTTP 错误状态码
+                if (!response.ok) {
+                    if (response.status === 503) {
+                        return { success: false, error: '服务暂时不可用，请稍后重试', httpError: 503 };
+                    } else if (response.status === 502) {
+                        return { success: false, error: '网关错误', httpError: 502 };
+                    } else if (response.status === 500) {
+                        return { success: false, error: '服务器内部错误', httpError: 500 };
+                    } else if (response.status === 404) {
+                        return { success: false, error: 'API 接口未找到', httpError: 404 };
+                    } else {
+                        return { success: false, error: `请求失败 (${response.status})`, httpError: response.status };
+                    }
+                }
+                
                 const data = await response.json();
                 return data;
             } catch (error) {
                 console.error('API 调用失败:', error);
-                return { success: false, error: error.message };
+                // 网络错误或 JSON 解析错误
+                if (error instanceof SyntaxError) {
+                    return { success: false, error: '响应格式错误' };
+                }
+                return { success: false, error: '网络连接失败' };
             }
         }
 
@@ -460,10 +480,15 @@
                 if (data.success !== false) {
                     updateUI(data);
                 } else {
-                    showMessage(data.error || '获取状态失败', 'error');
+                    // 503 等临时错误不弹消息，避免自动刷新时频繁提示
+                    if (data.httpError && [502, 503, 504].includes(data.httpError)) {
+                        console.warn('服务暂时不可用:', data.error);
+                    } else {
+                        showMessage(data.error || '获取状态失败', 'error');
+                    }
                 }
             } catch (error) {
-                showMessage('获取状态失败', 'error');
+                console.error('刷新状态失败:', error);
             } finally {
                 refreshBtn.classList.remove('spinning');
             }
