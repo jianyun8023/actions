@@ -4,7 +4,7 @@ set -e
 echo "=== SSL VPN Client Container Starting ==="
 
 # 默认启动后自动 quickconnect（VPN 建链后才会创建 tun0，SOCKS5 才能起来）
-# 可通过 AUTO_QUICKCONNECT=0 禁用（例如只想手动在 Web 终端里操作）
+# 可通过 AUTO_QUICKCONNECT=0 禁用（例如只想手动在 Web 管理页面里操作）
 AUTO_QUICKCONNECT="${AUTO_QUICKCONNECT:-1}"
 QUICKCONNECT_RETRY_INTERVAL="${QUICKCONNECT_RETRY_INTERVAL:-10}"
 
@@ -96,11 +96,15 @@ update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy 2>/dev/null || tr
     fi
 done) &
 
-# 启动 Web 终端
-echo "[$(date)] Starting Web Terminal on port 8080..."
-/opt/webui.sh &
+# 创建 lighttpd 日志目录
+mkdir -p /var/log/lighttpd
+chown www-data:www-data /var/log/lighttpd
 
-echo "[$(date)] Container ready. Use Web Terminal at http://localhost:8080"
+# 启动 Web 管理页面
+echo "[$(date)] Starting Web Management UI on port 8080..."
+lighttpd -f /etc/lighttpd/lighttpd.conf
+
+echo "[$(date)] Container ready. Use Web Management UI at http://localhost:8080"
 echo "[$(date)] SOCKS5 proxy will be available at port 1080 after VPN connection"
 
 # 保持容器运行

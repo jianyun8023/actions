@@ -1,12 +1,12 @@
 # SSL VPN Client Docker
 
-将 SSL VPN 客户端封装在 Docker 容器中，通过 SOCKS5 代理访问内网资源，并提供一个**极简 Web 终端**，方便你在浏览器里直接执行命令。
+将 SSL VPN 客户端封装在 Docker 容器中，通过 SOCKS5 代理访问内网资源，并提供一个**简洁的 Web 管理页面**，方便你在浏览器里管理 VPN 连接。
 
 ## 功能特性
 
 - 🔐 SSL VPN 客户端容器化
 - 🌐 SOCKS5 代理 (端口 1080)
-- 🖥️ Web 终端 (端口 8080)
+- 🖥️ Web 管理页面 (端口 8080)
 - 📁 配置持久化
 - 🔄 自动重连支持
 
@@ -43,16 +43,16 @@ docker run -d \
 
 ## 使用方式
 
-### Web 终端（推荐）
+### Web 管理页面（推荐）
 
-访问 `http://localhost:8080` 打开 Web 终端，在浏览器里直接执行容器内命令，例如：
+访问 `http://localhost:8080` 打开 Web 管理页面，可以：
 
-```bash
-cd /opt/sslvpnclient
-./secgateaccess showinfo
-./secgateaccess quickconnect
-./secgateaccess disconnect
-```
+- **查看状态**：实时显示 VPN 连接状态、分配的 IP、连接时长等
+- **快速连接**：一键执行 `quickconnect`（使用保存的配置）
+- **断开连接**：一键断开 VPN 连接
+- **路由表**：查看 VPN 分配的路由规则
+
+页面会每 5 秒自动刷新状态。
 
 默认容器启动会自动执行 `secgateaccess quickconnect`（并后台重试），确保 VPN 尽快建链、创建 `tun0`，随后 SOCKS5 代理（1080）才会自动可用。
 
@@ -66,12 +66,6 @@ AUTO_QUICKCONNECT=0
 
 ```bash
 QUICKCONNECT_RETRY_INTERVAL=10
-```
-
-可选：启用 BasicAuth（避免端口暴露后被随意访问）：
-
-```bash
-WEB_TERMINAL_CREDENTIALS=user:pass
 ```
 
 ### SOCKS5 代理
@@ -95,10 +89,11 @@ docker exec -it sslvpn bash
 
 # 在容器内
 cd /opt/sslvpnclient
-./secgateaccess quickconnect    # 快速连接
+./secgateaccess quickconnect    # 快速连接（使用保存的配置）
 ./secgateaccess disconnect      # 断开连接
 ./secgateaccess showinfo        # 查看状态
 ./secgateaccess version         # 版本信息
+./secgateaccess changepasswd    # 修改密码
 ```
 
 ## 端口说明
@@ -106,7 +101,7 @@ cd /opt/sslvpnclient
 | 端口 | 用途 |
 |------|------|
 | 1080 | SOCKS5 代理 |
-| 8080 | Web 终端（ttyd） |
+| 8080 | Web 管理页面 |
 
 ## 架构说明（重要）
 
@@ -124,7 +119,7 @@ platform: linux/amd64
 ## 注意事项
 
 1. 容器需要 `NET_ADMIN` 权限和 `/dev/net/tun` 设备
-2. 首次使用需要通过 CLI 进行登录配置
+2. 首次使用需要通过 CLI 进行登录配置（保存账号密码）
 3. SOCKS5 代理在 VPN 连接成功后自动启动
 
 ## 故障排查
@@ -138,19 +133,7 @@ platform: linux/amd64
 - 确认 VPN 已连接（tun0 设备存在）
 - 检查 danted 进程：`docker exec sslvpn pgrep danted`
 
-### Web 界面无法访问
+### Web 管理页面无法访问
 - 确认端口映射正确
 - 检查 8080 端口是否被占用
-
-### Web 终端灰屏 / 不能输入
-- 先确认 WebSocket 是否可用（直接访问端口或你的反代需要支持 WebSocket 升级）
-- 用命令验证（返回 `101 Switching Protocols` 说明 WebSocket OK）：
-
-```bash
-curl -sv --http1.1 \
-  -H 'Connection: Upgrade' \
-  -H 'Upgrade: websocket' \
-  -H 'Sec-WebSocket-Version: 13' \
-  -H 'Sec-WebSocket-Key: SGVsbG8sIHdvcmxkIQ==' \
-  http://<你的地址>:8080/ws
-```
+- 查看 lighttpd 日志：`docker exec sslvpn cat /var/log/lighttpd/error.log`

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSL VPN 管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .status-dot.connected {
+            background: #22c55e;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+        }
+
+        .status-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .refresh-btn {
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .refresh-btn.spinning svg {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: #fff;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-connect {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: #fff;
+        }
+
+        .btn-connect:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-disconnect {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #fff;
+        }
+
+        .btn-disconnect:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .routes-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .routes-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .routes-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .routes-count {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .routes-list {
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+        }
+
+        .route-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #aaa;
+        }
+
+        .route-item:last-child {
+            border-bottom: none;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .message.info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #3b82f6;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SSL VPN 管理</h1>
+            <p>安全网关接入客户端</p>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div class="status-card">
+            <div class="status-header">
+                <div class="status-indicator">
+                    <div id="statusDot" class="status-dot"></div>
+                    <span id="statusText" class="status-text">检查中...</span>
+                </div>
+                <button class="refresh-btn" onclick="refreshStatus()" title="刷新状态">
+                    <svg id="refreshIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6"></path>
+                        <path d="M1 20v-6h6"></path>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="infoSection" class="info-grid hidden">
+                <div class="info-item">
+                    <span class="info-label">登录用户</span>
+                    <span id="loginUser" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">服务器</span>
+                    <span id="serverIp" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">分配 IP</span>
+                    <span id="privateIp" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">加密方式</span>
+                    <span id="encryption" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">连接时长</span>
+                    <span id="duration" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">版本</span>
+                    <span id="version" class="info-value">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button id="connectBtn" class="btn btn-connect" onclick="connect()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14"></path>
+                    <path d="M12 5l7 7-7 7"></path>
+                </svg>
+                快速连接
+            </button>
+            <button id="disconnectBtn" class="btn btn-disconnect" onclick="disconnect()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                断开连接
+            </button>
+        </div>
+
+        <div id="routesCard" class="routes-card hidden" style="margin-top: 20px;">
+            <div class="routes-header">
+                <span class="routes-title">路由表</span>
+                <span id="routesCount" class="routes-count">0 条</span>
+            </div>
+            <div id="routesList" class="routes-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let isConnected = false;
+        let autoRefreshInterval = null;
+
+        // API 调用
+        async function callApi(action) {
+            try {
+                const response = await fetch(`/cgi-bin/api.cgi?action=${action}`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('API 调用失败:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // 显示消息
+        function showMessage(text, type = 'info') {
+            const msgEl = document.getElementById('message');
+            msgEl.textContent = text;
+            msgEl.className = `message show ${type}`;
+            setTimeout(() => {
+                msgEl.classList.remove('show');
+            }, 3000);
+        }
+
+        // 更新 UI 状态
+        function updateUI(data) {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const infoSection = document.getElementById('infoSection');
+            const routesCard = document.getElementById('routesCard');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+
+            isConnected = data.connected;
+
+            if (isConnected) {
+                statusDot.classList.add('connected');
+                statusText.textContent = '已连接';
+                infoSection.classList.remove('hidden');
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+
+                // 更新详细信息
+                if (data.info) {
+                    document.getElementById('loginUser').textContent = data.info.loginUser || '-';
+                    document.getElementById('serverIp').textContent = data.info.serverIp || '-';
+                    document.getElementById('privateIp').textContent = data.info.privateIp || '-';
+                    document.getElementById('encryption').textContent = data.info.encryption || '-';
+                    document.getElementById('duration').textContent = data.info.duration || '-';
+                    document.getElementById('version').textContent = data.info.version || '-';
+
+                    // 更新路由表
+                    if (data.info.targets && data.info.targets.length > 0) {
+                        routesCard.classList.remove('hidden');
+                        document.getElementById('routesCount').textContent = `${data.info.targets.length} 条`;
+                        document.getElementById('routesList').innerHTML = data.info.targets
+                            .map(t => `<div class="route-item">${t}</div>`)
+                            .join('');
+                    } else {
+                        routesCard.classList.add('hidden');
+                    }
+                }
+            } else {
+                statusDot.classList.remove('connected');
+                statusText.textContent = '未连接';
+                infoSection.classList.add('hidden');
+                routesCard.classList.add('hidden');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+            }
+        }
+
+        // 刷新状态
+        async function refreshStatus() {
+            const refreshIcon = document.getElementById('refreshIcon');
+            const refreshBtn = refreshIcon.parentElement;
+            
+            refreshBtn.classList.add('spinning');
+            
+            try {
+                const data = await callApi('status');
+                if (data.success !== false) {
+                    updateUI(data);
+                } else {
+                    showMessage(data.error || '获取状态失败', 'error');
+                }
+            } catch (error) {
+                showMessage('获取状态失败', 'error');
+            } finally {
+                refreshBtn.classList.remove('spinning');
+            }
+        }
+
+        // 快速连接
+        async function connect() {
+            const btn = document.getElementById('connectBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>连接中...</span>';
+            
+            showMessage('正在建立 VPN 连接...', 'info');
+            
+            try {
+                const data = await callApi('connect');
+                if (data.success) {
+                    showMessage('连接命令已执行，等待 VPN 建立...', 'success');
+                    // 延迟刷新状态，等待 VPN 建立
+                    setTimeout(refreshStatus, 3000);
+                } else {
+                    showMessage(data.error || '连接失败', 'error');
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                showMessage('连接失败', 'error');
+                btn.disabled = false;
+            }
+            
+            btn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14"></path>
+                    <path d="M12 5l7 7-7 7"></path>
+                </svg>
+                快速连接
+            `;
+        }
+
+        // 断开连接
+        async function disconnect() {
+            const btn = document.getElementById('disconnectBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>断开中...</span>';
+            
+            showMessage('正在断开 VPN 连接...', 'info');
+            
+            try {
+                const data = await callApi('disconnect');
+                if (data.success) {
+                    showMessage('已断开连接', 'success');
+                    setTimeout(refreshStatus, 1000);
+                } else {
+                    showMessage(data.error || '断开失败', 'error');
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                showMessage('断开失败', 'error');
+                btn.disabled = false;
+            }
+            
+            btn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                断开连接
+            `;
+        }
+
+        // 启动自动刷新
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            autoRefreshInterval = setInterval(refreshStatus, 5000);
+        }
+
+        // 页面加载时
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshStatus();
+            startAutoRefresh();
+        });
+
+        // 页面可见性变化时
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                clearInterval(autoRefreshInterval);
+            } else {
+                refreshStatus();
+                startAutoRefresh();
+            }
+        });
+    </script>
+</body>
+</html>
