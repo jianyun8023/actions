@@ -44,13 +44,64 @@ VNC_USER_NAME=${VNC_USER:-vncuser}
 VNC_USER_PASSWORD=${VNC_PASSWORD:-password}
 VNC_USER_PROTOCOL=${VNC_PROTOCOL:-http}
 
+find_kasmvnc_bin() {
+  local candidate=""
+  for candidate in \
+    kasmvncserver \
+    /opt/kasmvnc/bin/kasmvncserver \
+    /usr/bin/kasmvncserver \
+    /usr/local/bin/kasmvncserver \
+    /opt/kasmvnc/bin/vncserver \
+    /usr/bin/vncserver \
+    /usr/local/bin/vncserver; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      command -v "$candidate"
+      return 0
+    fi
+    if [ -x "$candidate" ]; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+find_kasmvnc_passwd_bin() {
+  local candidate=""
+  for candidate in \
+    kasmvncpasswd \
+    /opt/kasmvnc/bin/kasmvncpasswd \
+    /usr/bin/kasmvncpasswd \
+    /usr/local/bin/kasmvncpasswd; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      command -v "$candidate"
+      return 0
+    fi
+    if [ -x "$candidate" ]; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+KASMVNC_SERVER_BIN=$(find_kasmvnc_bin || true)
+KASMVNC_PASSWD_BIN=$(find_kasmvnc_passwd_bin || true)
+
+if [ -z "$KASMVNC_SERVER_BIN" ] || [ -z "$KASMVNC_PASSWD_BIN" ]; then
+  echo "KasmVNC binaries not found. Please verify KasmVNC installation and PATH."
+  echo "KASMVNC_SERVER_BIN=$KASMVNC_SERVER_BIN"
+  echo "KASMVNC_PASSWD_BIN=$KASMVNC_PASSWD_BIN"
+  exit 1
+fi
+
 # 清理可能存在的旧锁文件
 rm -f /tmp/.X0-lock
 rm -f /tmp/.X11-unix/X0
 
 # 创建 KasmVNC 用户
 echo "Creating KasmVNC user: $VNC_USER_NAME"
-echo -e "$VNC_USER_PASSWORD\n$VNC_USER_PASSWORD\n" | kasmvncpasswd -u $VNC_USER_NAME -w -r
+echo -e "$VNC_USER_PASSWORD\n$VNC_USER_PASSWORD\n" | "$KASMVNC_PASSWD_BIN" -u $VNC_USER_NAME -w -r
 
 # 写入 KasmVNC 默认配置
 mkdir -p $HOME/.vnc
@@ -66,7 +117,7 @@ EOF
 
 # 启动 KasmVNC
 echo "Starting KasmVNC server..."
-kasmvncserver :0 -geometry 1280x720 -depth 24
+"$KASMVNC_SERVER_BIN" :0 -geometry 1280x720 -depth 24
 
 export DISPLAY=:0
 
