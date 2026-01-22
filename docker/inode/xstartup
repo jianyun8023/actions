@@ -15,16 +15,11 @@ if [ $OS = 'Linux' ]; then
   esac
 fi
 
-if [ -x /etc/X11/xinit/xinitrc ]; then
-  exec /etc/X11/xinit/xinitrc
-fi
-
-if [ -f /etc/X11/xinit/xinitrc ]; then
-  exec sh /etc/X11/xinit/xinitrc
-fi
-
 [ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
 xsetroot -solid grey
 
 # 启动 fluxbox 窗口管理器
 fluxbox &
+
+# 给一个终端窗口，便于确认图形会话正常
+xterm &

@@ -117,14 +117,25 @@ EOF
 
 # 启动 KasmVNC
 echo "Starting KasmVNC server..."
-"$KASMVNC_SERVER_BIN" :0 -geometry 1280x720 -depth 24
+"$KASMVNC_SERVER_BIN" :0 -geometry 1280x720 -depth 24 -select-de fluxbox
 
 export DISPLAY=:0
 
-# 启动 fluxbox 窗口管理器
-echo "Starting fluxbox..."
-fluxbox &
-sleep 2  # 等待 fluxbox 启动
+# 启动 fluxbox 窗口管理器（由 xstartup 接管）
+
+# ==================== NetworkManager/DBus ====================
+echo "Starting dbus and NetworkManager..."
+if command -v dbus-daemon >/dev/null 2>&1; then
+  if ! pgrep -x dbus-daemon >/dev/null 2>&1; then
+    dbus-daemon --system --fork
+  fi
+fi
+if command -v NetworkManager >/dev/null 2>&1; then
+  if ! pgrep -x NetworkManager >/dev/null 2>&1; then
+    /usr/sbin/NetworkManager --no-daemon &
+    sleep 1
+  fi
+fi
 
 # ==================== iNode 客户端启动 ====================
 echo "Starting iNodeClient..."

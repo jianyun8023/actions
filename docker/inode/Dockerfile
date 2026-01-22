@@ -37,6 +37,9 @@ RUN apt-get update && apt-get install -y \
     xclip \
     xsel \
     libnm0 \
+    libnm-dev \
+    network-manager \
+    dbus \
     dante-server busybox \
     ssl-cert \
     --no-install-recommends && \
