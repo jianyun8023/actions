@@ -117,9 +117,17 @@ EOF
 
 # 启动 KasmVNC
 echo "Starting KasmVNC server..."
-"$KASMVNC_SERVER_BIN" :0 -geometry 1280x720 -depth 24 -select-de fluxbox
+"$KASMVNC_SERVER_BIN" :0 -geometry 1280x720 -depth 24
 
 export DISPLAY=:0
+
+# 等待 X 会话可用，避免 GTK 提前启动失败
+for i in $(seq 1 20); do
+  if xdpyinfo -display "$DISPLAY" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
 
 # 启动 fluxbox 窗口管理器（由 xstartup 接管）
 
