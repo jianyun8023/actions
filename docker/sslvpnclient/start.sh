@@ -98,7 +98,6 @@ done) &
 
 # 创建 lighttpd 日志目录
 mkdir -p /var/log/lighttpd
-chown www-data:www-data /var/log/lighttpd
 
 # 启动 Web 管理页面
 echo "[$(date)] Starting Web Management UI on port 8080..."

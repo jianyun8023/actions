@@ -1,6 +1,6 @@
 #!/bin/bash
 # SSL VPN 管理 API - CGI 脚本
-# 支持的操作: status, connect, disconnect
+# 支持的操作: status, connect, disconnect, debug
 
 # 输出 JSON 响应头
 echo "Content-Type: application/json"
@@ -37,44 +37,47 @@ check_tun0() {
     [ -d /sys/class/net/tun0 ]
 }
 
+# JSON 转义函数
+json_escape() {
+    printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g' | tr -d '\r'
+}
+
 # 解析 showinfo 输出为 JSON
 parse_showinfo() {
     local output="$1"
     local login_user server_ip private_ip encryption duration version
     local targets=""
     
-    login_user=$(echo "$output" | grep "Login User:" | sed 's/Login User:[[:space:]]*//')
-    server_ip=$(echo "$output" | grep "Server Ip/Port:" | sed 's/Server Ip\/Port:[[:space:]]*//')
-    private_ip=$(echo "$output" | grep "Private IP:" | sed 's/Private IP:[[:space:]]*//' | sed 's/[[:space:]]*Mask:.*//')
-    encryption=$(echo "$output" | grep "Encryption:" | sed 's/Encryption:[[:space:]]*//')
-    duration=$(echo "$output" | grep "Duration:" | sed 's/Duration:[[:space:]]*//')
-    version=$(echo "$output" | grep "Version:" | sed 's/Version:[[:space:]]*//')
+    # 使用更宽松的匹配，处理可能的空格差异
+    login_user=$(echo "$output" | grep -i "Login User" | sed 's/.*Login User[[:space:]]*:[[:space:]]*//' | tr -d '\r')
+    server_ip=$(echo "$output" | grep -i "Server Ip" | sed 's/.*Server Ip\/Port[[:space:]]*:[[:space:]]*//' | tr -d '\r')
+    private_ip=$(echo "$output" | grep -i "Private IP" | sed 's/.*Private IP[[:space:]]*:[[:space:]]*//' | sed 's/[[:space:]]*Mask.*//' | tr -d '\r')
+    encryption=$(echo "$output" | grep -i "Encryption" | sed 's/.*Encryption[[:space:]]*:[[:space:]]*//' | tr -d '\r')
+    duration=$(echo "$output" | grep -i "Duration" | sed 's/.*Duration[[:space:]]*:[[:space:]]*//' | tr -d '\r')
+    version=$(echo "$output" | grep -i "Version" | sed 's/.*Version[[:space:]]*:[[:space:]]*//' | tr -d '\r')
     
     # 解析路由目标
     while IFS= read -r line; do
-        if echo "$line" | grep -q "^Target\["; then
-            target=$(echo "$line" | sed 's/Target\[[0-9]*\]:[[:space:]]*//' | sed 's/[[:space:]]*Metric:.*//')
-            if [ -n "$targets" ]; then
-                targets="$targets,"
+        if echo "$line" | grep -q "Target\["; then
+            target=$(echo "$line" | sed 's/.*Target\[[0-9]*\][[:space:]]*:[[:space:]]*//' | sed 's/[[:space:]]*Metric.*//' | tr -d '\r')
+            if [ -n "$target" ]; then
+                if [ -n "$targets" ]; then
+                    targets="$targets,"
+                fi
+                targets="$targets\"$target\""
             fi
-            targets="$targets\"$target\""
         fi
     done <<< "$output"
     
-    cat <<EOF
-{
-    "connected": true,
-    "info": {
-        "loginUser": "$login_user",
-        "serverIp": "$server_ip",
-        "privateIp": "$private_ip",
-        "encryption": "$encryption",
-        "duration": "$duration",
-        "version": "$version",
-        "targets": [$targets]
-    }
-}
-EOF
+    # 使用 printf 确保 JSON 格式正确
+    printf '{"connected":true,"info":{"loginUser":"%s","serverIp":"%s","privateIp":"%s","encryption":"%s","duration":"%s","version":"%s","targets":[%s]}}' \
+        "$(json_escape "$login_user")" \
+        "$(json_escape "$server_ip")" \
+        "$(json_escape "$private_ip")" \
+        "$(json_escape "$encryption")" \
+        "$(json_escape "$duration")" \
+        "$(json_escape "$version")" \
+        "$targets"
 }
 
 # 处理不同的 action
@@ -82,15 +85,33 @@ case "$ACTION" in
     status)
         if check_tun0; then
             # VPN 已连接，获取详细信息
+            # 切换到 VPN 客户端目录执行命令
+            cd "$(dirname "$VPN_CMD")" 2>/dev/null || true
             info_output=$("$VPN_CMD" showinfo 2>&1)
-            if echo "$info_output" | grep -q "Login User:"; then
+            
+            # 检查输出是否包含有效信息
+            if echo "$info_output" | grep -qi "Login User"; then
                 parse_showinfo "$info_output"
             else
-                echo '{"connected":true,"info":null}'
+                # 返回原始输出用于调试
+                escaped_output=$(json_escape "$info_output")
+                printf '{"connected":true,"info":null,"debug":"%s"}' "$escaped_output"
             fi
         else
             echo '{"connected":false}'
         fi
+        ;;
+    
+    debug)
+        # 调试模式：返回原始命令输出
+        cd "$(dirname "$VPN_CMD")" 2>/dev/null || true
+        info_output=$("$VPN_CMD" showinfo 2>&1)
+        tun_exists="false"
+        if check_tun0; then
+            tun_exists="true"
+        fi
+        escaped_output=$(json_escape "$info_output")
+        printf '{"vpn_cmd":"%s","tun0_exists":%s,"raw_output":"%s"}' "$VPN_CMD" "$tun_exists" "$escaped_output"
         ;;
     
     connect)
