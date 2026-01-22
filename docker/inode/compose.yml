@@ -12,11 +12,14 @@ services:
     devices:
       - /dev/net/tun                # 挂载 TUN 设备
     ports:
-      - "5901:5900"                 # VNC 端口映射
+      - "5901:5900"                 # KasmVNC 端口映射 (对外5901 -> 内部5900)
       - "1080:1080"                 # socks5 端口映射（建议使用固定映射）
     volumes:
       - ./aaa.icnf:/opt/apps/com.client.inode.arm/files/clientfiles/7000/aaa.icnf
     stdin_open: true
     environment:
-      - VNC_PASSWORD=123456
+      - VNC_USER=vncuser            # KasmVNC 用户名
+      - VNC_PASSWORD=password       # KasmVNC 密码
+      - VNC_PROTOCOL=http           # KasmVNC 协议 (http/vnc)
     tty: true
+    restart: unless-stopped

@@ -1,21 +1,30 @@
 # 基础镜像选择
 FROM debian:12-slim
 
+# 镜像元数据
+LABEL maintainer="jianyun8023" \
+      version="1.0" \
+      description="iNode VPN Client with KasmVNC"
+
 # Use the TARGETARCH build argument to get the architecture
 ARG TARGETARCH
+ARG KASMVNC_VERSION=1.4.0
 
 # 设置非交互模式，避免安装交互提示
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DISPLAY=:0
-ENV VNC_PASSWORD=123456
 ENV ARCH=${TARGETARCH}
+
+# KasmVNC 环境变量
+ENV VNC_USER=vncuser
+ENV VNC_PASSWORD=password
+ENV VNC_PROTOCOL=http
+
 # 更新并安装基础依赖
 RUN apt-get update && apt-get install -y \
-    x11vnc \
-    xvfb \
-    supervisor \
-    dbus-x11 \
-    xfce4 xfce4-goodies \
+    fluxbox \
+    xterm \
+    x11-utils \
     net-tools \
     iproute2 \
     iptables \
@@ -23,34 +32,43 @@ RUN apt-get update && apt-get install -y \
     curl \
     libgtk2.0-0 libgdk-pixbuf-2.0-0 libjpeg62-turbo \
     libglib2.0-dev \
-    xclip  \
+    xclip \
     xsel \
     libnm0 \
     dante-server busybox \
+    ssl-cert \
     --no-install-recommends && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# 安装 KasmVNC
+RUN wget https://github.com/kasmtech/KasmVNC/releases/download/v${KASMVNC_VERSION}/kasmvncserver_bookworm_${KASMVNC_VERSION}_${TARGETARCH}.deb -O /tmp/kasmvnc.deb \
+    && apt-get update \
+    && dpkg -i /tmp/kasmvnc.deb || apt-get install -y -f \
+    && rm -f /tmp/kasmvnc.deb \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 安装 deb 应用
 COPY ./deb/inode.${TARGETARCH}_E0626.deb /tmp/inode.deb
+RUN apt-get update && apt-get install -y /tmp/inode.deb && rm /tmp/inode.deb \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN apt install /tmp/inode.deb && rm /tmp/inode.deb;
-# 复制启动脚本
+# 复制配置文件
 COPY danted.conf.sample /etc/danted.conf.sample
 COPY start.sh /opt/start.sh
+COPY xstartup /root/.vnc/xstartup
+
 # 设置工作目录
 WORKDIR /opt
 
-# 配置 x11vnc 密码
-RUN mkdir ~/.vnc && \
-    x11vnc -storepasswd ${VNC_PASSWORD} ~/.vnc/passwd \
-    && chmod +x /opt/start.sh
+# 配置权限
+RUN chmod +x /opt/start.sh && chmod +x /root/.vnc/xstartup
 
-# 复制 Supervisor 配置文件
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# 暴露端口（5900 用于 VNC，1080 用于 VPN）
+# 暴露端口（5900 用于 KasmVNC WebSocket，1080 用于 SOCKS5 代理）
 EXPOSE 5900 1080
 
-# 启动 Supervisor
-CMD ["/usr/bin/supervisord"]
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:5900/ || exit 1
+
+# 启动脚本
+CMD ["/opt/start.sh"]
