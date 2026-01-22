@@ -6,6 +6,11 @@
 echo "Content-Type: application/json"
 echo ""
 
+# 缓存配置
+CACHE_DIR="/tmp/vpn-api-cache"
+CACHE_TTL=5  # 缓存有效期（秒）
+mkdir -p "$CACHE_DIR" 2>/dev/null
+
 # 解析 action 参数
 ACTION=""
 if [ -n "$QUERY_STRING" ]; then
@@ -40,6 +45,31 @@ check_tun0() {
 # 检查 SOCKS5 代理状态
 check_socks5() {
     pgrep -x danted > /dev/null 2>&1
+}
+
+# 获取缓存（如果有效）
+get_cache() {
+    local key="$1"
+    local cache_file="$CACHE_DIR/$key"
+    
+    if [ -f "$cache_file" ]; then
+        local cache_time=$(stat -c %Y "$cache_file" 2>/dev/null || stat -f %m "$cache_file" 2>/dev/null)
+        local now=$(date +%s)
+        local age=$((now - cache_time))
+        
+        if [ "$age" -lt "$CACHE_TTL" ]; then
+            cat "$cache_file"
+            return 0
+        fi
+    fi
+    return 1
+}
+
+# 设置缓存
+set_cache() {
+    local key="$1"
+    local value="$2"
+    echo "$value" > "$CACHE_DIR/$key"
 }
 
 # JSON 转义函数
@@ -139,20 +169,29 @@ case "$ACTION" in
         fi
         
         if check_tun0; then
-            # VPN 已连接，获取详细信息
-            # 切换到 VPN 客户端目录执行命令
-            cd "$(dirname "$VPN_CMD")" 2>/dev/null || true
-            info_output=$("$VPN_CMD" showinfo 2>&1)
-            
-            # 检查输出是否包含有效信息
-            if echo "$info_output" | grep -qi "Login User"; then
-                parse_showinfo "$info_output"
+            # 尝试从缓存获取（tun0 存在时才用缓存）
+            cached_result=$(get_cache "showinfo")
+            if [ -n "$cached_result" ]; then
+                # 更新缓存中的 socks5 状态（这个需要实时）
+                echo "$cached_result" | sed "s/\"socks5\":[^,]*/\"socks5\":$socks5_status/"
             else
-                # 返回原始输出用于调试
-                escaped_output=$(json_escape "$info_output")
-                printf '{"connected":true,"socks5":%s,"info":null,"debug":"%s"}' "$socks5_status" "$escaped_output"
+                # VPN 已连接，获取详细信息
+                cd "$(dirname "$VPN_CMD")" 2>/dev/null || true
+                info_output=$("$VPN_CMD" showinfo 2>&1)
+                
+                # 检查输出是否包含有效信息
+                if echo "$info_output" | grep -qi "Login User"; then
+                    result=$(parse_showinfo "$info_output")
+                    set_cache "showinfo" "$result"
+                    echo "$result"
+                else
+                    escaped_output=$(json_escape "$info_output")
+                    printf '{"connected":true,"socks5":%s,"info":null,"debug":"%s"}' "$socks5_status" "$escaped_output"
+                fi
             fi
         else
+            # 未连接时清除缓存
+            rm -f "$CACHE_DIR/showinfo" 2>/dev/null
             printf '{"connected":false,"socks5":%s}' "$socks5_status"
         fi
         ;;
