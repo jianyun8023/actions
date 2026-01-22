@@ -296,6 +296,10 @@
                     <div id="statusDot" class="status-dot"></div>
                     <span id="statusText" class="status-text">检查中...</span>
                 </div>
+                <div class="status-indicator" style="margin-left: 20px;">
+                    <div id="socks5Dot" class="status-dot"></div>
+                    <span id="socks5Text" class="status-text" style="font-size: 0.9rem;">SOCKS5</span>
+                </div>
                 <button class="refresh-btn" onclick="refreshStatus()" title="刷新状态">
                     <svg id="refreshIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M23 4v6h-6"></path>
@@ -389,12 +393,23 @@
         function updateUI(data) {
             const statusDot = document.getElementById('statusDot');
             const statusText = document.getElementById('statusText');
+            const socks5Dot = document.getElementById('socks5Dot');
+            const socks5Text = document.getElementById('socks5Text');
             const infoSection = document.getElementById('infoSection');
             const routesCard = document.getElementById('routesCard');
             const connectBtn = document.getElementById('connectBtn');
             const disconnectBtn = document.getElementById('disconnectBtn');
 
             isConnected = data.connected;
+
+            // 更新 SOCKS5 状态
+            if (data.socks5) {
+                socks5Dot.classList.add('connected');
+                socks5Text.textContent = 'SOCKS5 :1080';
+            } else {
+                socks5Dot.classList.remove('connected');
+                socks5Text.textContent = 'SOCKS5';
+            }
 
             if (isConnected) {
                 statusDot.classList.add('connected');
