@@ -23,7 +23,6 @@ ENV VNC_PROTOCOL=http
 # 更新并安装基础依赖
 RUN apt-get update && apt-get install -y \
     fluxbox \
-    xterm \
     x11-utils \
     net-tools \
     iproute2 \

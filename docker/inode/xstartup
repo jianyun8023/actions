@@ -20,6 +20,3 @@ xsetroot -solid grey
 
 # 启动 fluxbox 窗口管理器
 fluxbox &
-
-# 给一个终端窗口，便于确认图形会话正常
-xterm &
