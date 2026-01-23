@@ -116,8 +116,8 @@ then
 	fi
 
 	# 清理可能存在的旧锁文件
-	rm -f /tmp/.X0-lock /tmp/.X1-lock
-	rm -f /tmp/.X11-unix/X0 /tmp/.X11-unix/X1
+	rm -f /tmp/.X0-lock
+	rm -f /tmp/.X11-unix/X0
 
 	# 创建 KasmVNC 用户
 	echo "Creating KasmVNC user: $VNC_USER_NAME"
@@ -128,7 +128,7 @@ then
 	cat > $HOME/.vnc/kasmvnc.yaml << EOF
 network:
   protocol: $VNC_USER_PROTOCOL
-  websocket_port: 5901	
+  websocket_port: 5900
   ssl:
     require_ssl: false
 command_line:
@@ -137,9 +137,9 @@ EOF
 
 	# 启动 KasmVNC
 	echo "Starting KasmVNC server..."
-	open_port 5901
-	"$KASMVNC_SERVER_BIN" :1 -geometry 1280x720 -depth 24
-	DISPLAY=:1
+	open_port 5900
+	"$KASMVNC_SERVER_BIN" :0 -geometry 1280x720 -depth 24
+	DISPLAY=:0
 
 	# 等待 X 会话可用，避免 GTK 提前启动失败
 	for i in $(seq 1 20); do
@@ -151,7 +151,7 @@ EOF
 
 	# 将 easyconnect 的密码放入粘贴板中，应对密码复杂且无法保存的情况 (eg: 需要短信验证登录)
 	# 感谢 @yakumioto https://github.com/Hagb/docker-easyconnect/pull/8
-	echo "$ECPASSWORD" | DISPLAY=:1 xclip -selection c
+	echo "$ECPASSWORD" | DISPLAY=:0 xclip -selection c
 fi
 
 exec start-sangfor.sh

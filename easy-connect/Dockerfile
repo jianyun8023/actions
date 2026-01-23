@@ -54,11 +54,11 @@ COPY --from=fake-hwaddr fake-hwaddr/fake-hwaddr.so /usr/local/lib/fake-hwaddr.so
 
 VOLUME /root/ /usr/share/sangfor/EasyConnect/resources/logs/
 
-# 暴露端口 (5901 KasmVNC, 1080 SOCKS5, 8888 tinyproxy)
-EXPOSE 5901 1080 8888
+# 暴露端口 (5900 KasmVNC, 1080 SOCKS5, 8888 tinyproxy)
+EXPOSE 5900 1080 8888
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:5901/ || exit 1
+  CMD curl -f http://localhost:5900/ || exit 1
 
 CMD ["start.sh"]
