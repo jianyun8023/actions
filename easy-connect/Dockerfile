@@ -45,8 +45,6 @@ RUN rm -f /usr/share/sangfor/EasyConnect/resources/conf/easy_connect.json &&\
     mv /usr/share/sangfor/EasyConnect/resources/conf/ /usr/share/sangfor/EasyConnect/resources/conf_backup &&\
     ln -s /root/conf /usr/share/sangfor/EasyConnect/resources/conf
 
-RUN chmod +x /root/.vnc/xstartup
-
 COPY --from=fake-hwaddr fake-hwaddr/fake-hwaddr.so /usr/local/lib/fake-hwaddr.so
 
 #ENV TYPE="" PASSWORD="" LOOP=""
