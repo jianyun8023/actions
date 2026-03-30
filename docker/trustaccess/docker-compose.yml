@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  trustaccess:
+    image: ghcr.io/jianyun8023/docker-trustaccess:latest
+    container_name: trustaccess
+    platform: linux/amd64  # 必需：TrustAccess 仅支持 amd64
+    restart: unless-stopped
+    
+    # 必需的权限和设备
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    
+    # 端口映射
+    ports:
+      - "8080:8080"  # Web 管理界面
+      - "1080:1080"  # SOCKS5 代理
+    
+    # 数据持久化
+    volumes:
+      - ./etc:/usr/local/trustaccess/etc   # VPN 配置文件目录
+      - ./logs:/tmp                          # 日志文件
+    
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

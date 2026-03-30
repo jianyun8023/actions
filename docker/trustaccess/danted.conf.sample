@@ -1,0 +1,43 @@
+# Dante SOCKS5 代理配置
+# 用于 TrustAccess VPN 容器
+
+logoutput: syslog
+
+# 内部监听地址
+internal: 0.0.0.0 port = 1080
+internal: :: port = 1080
+
+# 外部接口（trustaccess 为 VPN 隧道接口，其他接口动态添加）
+external: trustaccess
+#external-lines
+
+# 接口轮询策略
+external.rotation: route
+
+# 认证方式：无需认证
+clientmethod: none
+socksmethod: none
+
+# 运行用户
+user.privileged: root
+user.unprivileged: daemon
+
+# 客户端连接规则
+client pass {
+    from: 0.0.0.0/0 to: 0.0.0.0/0
+}
+
+client pass {
+    from: ::/0 to: ::/0
+}
+
+# SOCKS 代理规则
+socks pass {
+    from: 0.0.0.0/0 to: 0.0.0.0/0
+    protocol: tcp udp
+}
+
+socks pass {
+    from: ::/0 to: ::/0
+    protocol: tcp udp
+}
